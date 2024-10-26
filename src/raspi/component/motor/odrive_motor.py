@@ -3,7 +3,7 @@ import math
 import time
 import logging
 from dataclasses import dataclass
-from odrive_enums import *
+from component.motor.odrive_enums import *
 
 import component.can.can_bus as can_bus
 
@@ -20,8 +20,8 @@ db = cantools.database.load_file("src/raspi/odrive-cansimple.dbc")
 @device
 @dataclass(slots = True)
 class ODriveMotor:
-    bus: can_bus.CanBus = identifier(can_bus.ctx)
     axisID: int
+    bus: can_bus.CanBus = identifier(can_bus.ctx)
     current_state : MotorState = MotorState.UNDEFINED
     current_position: float = None
     current_velocity: float = None
@@ -86,11 +86,11 @@ def parse_odrive(data: dict) -> ODriveMotor:
 
 @device_action(ctx)
 def set_target_position(motor: ODriveMotor, position: float, velocity_FF: float = 0.0, torque_FF: float = 0.0) -> bool:
-    return send_message("Set_Input_Pos", {'Input_Pos': position, 'Vel_FF': velocity_FF, 'Torque_FF': torque_FF})
+    return send_message(motor, "Set_Input_Pos", {'Input_Pos': position, 'Vel_FF': velocity_FF, 'Torque_FF': torque_FF})
 
 @device_action(ctx)
 def set_target_velocity(motor: ODriveMotor, velocity: float, torque_FF: float = 0.0) -> bool:
-    return send_message("Set_Input_Vel", {'Input_Vel': velocity, 'Input_Torque_FF': torque_FF})
+    return send_message(motor, "Set_Input_Vel", {'Input_Vel': velocity, 'Input_Torque_FF': torque_FF})
 
 @device_action(ctx)
 def get_current_position(motor: ODriveMotor) -> float:
@@ -102,11 +102,11 @@ def get_current_velocity(motor: ODriveMotor) -> float:
 
 @device_action(ctx)
 def set_limits(motor: ODriveMotor, velocity_limit: float, current_limit: float) -> bool:
-    return send_message("Set_Limits", {'Velocity_Limit': velocity_limit, 'Current_Limit': current_limit})
+    return send_message(motor, "Set_Limits", {'Velocity_Limit': velocity_limit, 'Current_Limit': current_limit})
 
 @device_action(ctx)
 def request_set_state(motor: ODriveMotor, state: MotorState) -> bool:
-    return send_message("Set_Axis_State", {'Axis_Requested_State': state})
+    return send_message(motor, "Set_Axis_State", {'Axis_Requested_State': state})
 
 @device_action(ctx)
 def get_state(motor: ODriveMotor) -> MotorState:
@@ -117,7 +117,7 @@ def get_state(motor: ODriveMotor) -> MotorState:
 def set_controller_mode(motor: ODriveMotor, control_mode: ControlMode, input_mode: InputMode) -> bool:
     return send_message(motor, "Set_Controller_Mode", {'Control_Mode': control_mode, 'Input_Mode': input_mode})
 
-@device_action
+@device_action(ctx)
 def send_message(motor: ODriveMotor, msg_name: str, data: dict) -> bool:
     msg = db.get_message_by_name(msg_name)
     msg_id = msg.frame_id | motor.axisID << 5

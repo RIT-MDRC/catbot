@@ -40,7 +40,7 @@ def send_message(bus: CanBus, arbitration_id: int, data, is_extended_id: bool = 
     """Sends a message through the can bus. Returns whether the send was successful."""
     msg = can.Message(arbitration_id=arbitration_id, is_extended_id = is_extended_id, data = data)
     try:
-        bus.send(msg)
+        bus.bus.send(msg)
         return True
     except can.CanError:
         return False

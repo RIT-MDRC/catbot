@@ -13,10 +13,10 @@ motor = "odrive_1"
 odrive_action.request_set_state(motor, MotorState.FULL_CALIBRATION_SEQUENCE)
 
 while odrive_action.get_state(motor) != MotorState.IDLE:
-    print(f"Current state: {odrive_action.get_state(motor)}.")
-    print(f"Current position: {odrive_action.get_current_position(motor)}.")
-    print(f"Current velocity: {odrive_action.get_current_velocity(motor)}.")
-    print("")
+    #print(f"Current state: {odrive_action.get_state(motor)}.")
+    #print(f"Current position: {odrive_action.get_current_position(motor)}.")
+    #print(f"Current velocity: {odrive_action.get_current_velocity(motor)}.")
+    #print("")
     pass
 
 canbus_action.close(can_bus)
