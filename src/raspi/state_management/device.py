@@ -24,7 +24,8 @@ DEVICE_CONTEXT_COLLECTION = {}
 
 
 def check_only_class_instance(ctx: Context, x: any):
-    return reduce(lambda res, y: res or isinstance(x, y), ctx.allowed_classes, False)
+    return isinstance(x, ctx.allowed_classes)
+    # return reduce(lambda res, y: res or isinstance(x, y), ctx.allowed_classes, False)
 
 
 def register_device(ctx: Context, name: str, device):
@@ -163,6 +164,7 @@ def device(cls):
         k: v.ctx for k, v in cls.__dict__.items() if isinstance(v, Identifier)
     }
 
+    @wraps(original_init)
     def new_init(self, _identifier: str, **kwargs):
         def convert_value(key, value):
             if key not in identifier_attrs or check_only_class_instance(

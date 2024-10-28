@@ -1,5 +1,7 @@
 import unittest
 from ....raspi.component.adc import ADC_action
+from ....raspi.state_management.utils import FakeSMBus
+from ....raspi.state_management import identifier
 
 class adc_unit_tests(unittest.TestCase):
 
@@ -10,7 +12,17 @@ class adc_unit_tests(unittest.TestCase):
         self.assertEqual(results.adc, test_adc)
         self.assertEqual(results.address, test_address)
 
-    @unittest.skip("Currently not working.")
+
+    def test_ADCAnalogInputDevice_value_When_(self):
+        test_adc = ADC_action.ADC(address=1, input_devices={}, power_down=0, _identifier="")
+       
+        test_address = 1
+        test_adc_analog_input_device = ADC_action.ADCAnalogInputDevice(test_adc, test_address)
+        results = test_adc_analog_input_device.value()
+        self.assertEqual(results, "")
+
+
+    @unittest.skip("")
     def test_parse_analog_input_device_WhenValidConfig_CreatesADCAnalogInputDevice(self):
         config = {
             "adc": ADC_action.ADC(address=1, input_devices={}, power_down=0, _identifier=""),
