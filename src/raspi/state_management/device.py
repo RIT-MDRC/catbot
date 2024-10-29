@@ -1,3 +1,4 @@
+import functools
 import inspect
 import json
 import logging
@@ -157,46 +158,61 @@ def identifier(ctx: Context):
     return Identifier(ctx)
 
 
+def class_wraps(cls):
+    """functools wrapper for classes"""
+
+    def decorator(wrapper_cls):
+        for attr in functools.WRAPPER_ASSIGNMENTS:
+            if hasattr(cls, attr):
+                setattr(wrapper_cls, attr, getattr(cls, attr))
+        return wrapper_cls
+
+    return decorator
+
+
 def device(cls):
-    original_init = cls.__init__
-    needsIdentifier = "_identifier" in inspect.signature(original_init).parameters
+    """Class wrapper that will register any sub modules in the sub module context before running the wrapped class's init."""
+    needsIdentifier = "_identifier" in inspect.signature(cls.__init__).parameters
     identifier_attrs = {
         k: v.ctx for k, v in cls.__dict__.items() if isinstance(v, Identifier)
     }
 
-    @wraps(original_init)
-    def new_init(self, _identifier: str, **kwargs):
-        def convert_value(key, value):
-            if key not in identifier_attrs or check_only_class_instance(
-                (ctx := identifier_attrs[key]), value
-            ):
-                # irrelevant attribute values
-                return value
+    @class_wraps(cls)
+    class WrappedCls(cls):
+        def __init__(self, _identifier: str, **kwargs):
+            """This new init will check for any identifiers and register them in the context before running the wrapped class's init."""
 
-            if isinstance(value, str):
-                # identifier
-                if not (value in ctx.store or value in ctx.stored_keys):
-                    raise ValueError(
-                        f"{ctx}: {value} does not exist. Unique identifiers: \n{ctx.stored_keys}"
-                    )
-                if not value in ctx.stored_keys:
-                    ctx.stored_keys.add(value)
+            def convert_value(key, value):
+                """This function checks looks for any sub modules that needs to be instanstiated and if it does it will register it in the sub module context and return the identifier for the device."""
+                if key not in identifier_attrs or check_only_class_instance(
+                    (ctx := identifier_attrs[key]), value
+                ):
+                    # irrelevant attribute values
+                    return value
 
-                return value
+                if isinstance(value, str):
+                    # identifier
+                    if not (value in ctx.store or value in ctx.stored_keys):
+                        raise ValueError(
+                            f"{ctx}: {value} does not exist. Unique identifiers: \n{ctx.stored_keys}"
+                        )
+                    if not value in ctx.stored_keys:
+                        ctx.stored_keys.add(value)
 
-            # when an attribute's parameter is passed in as an attribute value
-            newDevice = ctx.parse_device(value, _identifier=_identifier)
-            newKey = f"{_identifier}.{key}"
-            register_device(ctx, newKey, newDevice)
-            return newKey
+                    return value
 
-        new_kwargs = {k: convert_value(k, v) for k, v in kwargs.items()}
-        if needsIdentifier:
-            new_kwargs["_identifier"] = _identifier
-        original_init(self, **new_kwargs)
+                # when an attribute's parameter is passed in as an attribute value
+                newDevice = ctx.parse_device(value, _identifier=_identifier)
+                newKey = f"{_identifier}.{key}"
+                register_device(ctx, newKey, newDevice)
+                return newKey
 
-    cls.__init__ = new_init
-    return cls
+            new_kwargs = {k: convert_value(k, v) for k, v in kwargs.items()}
+            if needsIdentifier:
+                new_kwargs["_identifier"] = _identifier
+            super.__init__(self, **new_kwargs)
+
+    return WrappedCls
 
 
 def open_json(file_name: str = "pinconfig.json"):
