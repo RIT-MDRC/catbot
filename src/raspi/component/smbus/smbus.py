@@ -1,12 +1,12 @@
 import logging
 
 from state_management import create_generic_context, device_action, device_parser
-from state_management.utils import FakeSMBus, is_dev
+from state_management.utils import FakeSMBus as SMBus, is_dev
 
 if is_dev():
     from smbus2 import SMBus
 
-ctx = create_generic_context("smbus2", (SMBus, FakeSMBus))
+ctx = create_generic_context("smbus2", (SMBus))
 
 
 @device_parser(ctx)
@@ -26,7 +26,6 @@ def parse_smbus2(config):
         logging.info(
             "dev environment detected. Mocking smbus2 device for bus %s", config
         )
-        return FakeSMBus(config)
     return SMBus(config)
 
 
