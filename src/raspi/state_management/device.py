@@ -171,7 +171,6 @@ def identifier(ctx: Context):
 
 
 def device(cls):
-    name = cls.__name__
     original_init = cls.__init__
     needsIdentifier = "_identifier" in inspect.signature(original_init).parameters
     identifier_attrs = {
