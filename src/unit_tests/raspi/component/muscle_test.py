@@ -10,6 +10,13 @@ def mock_pressure_okay(device: DigitalInputDevice):
 def mock_pressure_not_okay(device: DigitalInputDevice):
     return False
 
+def clear_ctx(ctx: Context):
+    ctx.store = dict()
+    ctx.stored_keys = set()
+def clear_all_ctx():
+    for c in DEVICE_CONTEXT_COLLECTION.items():
+        clear_ctx(c)
+        
 class MuscleTest(unittest.TestCase):
 
     def test_create_muscle_object(self):
@@ -18,8 +25,8 @@ class MuscleTest(unittest.TestCase):
 			"valve": 24,
 		}, "test")
         self.assertIsInstance(muscle,muscle_actions.MuscleObj, "Muscle built isn't isntance of MuscleObj")
-        muscle_actions.ctx.store = {} # clear store after every test
-        muscle_actions.ctx.stored_keys = {} # clear stored keys after every test as well
+        print(DEVICE_CONTEXT_COLLECTION)
+        clear_all_ctx()
 
     def test_muscle_object_contract_pressure_okay(self):
         muscle = muscle_actions.parse_muscle({
@@ -27,8 +34,7 @@ class MuscleTest(unittest.TestCase):
 			"valve": 24,
 		}, "test")
         self.assertTrue(muscle_actions.contract(muscle,mock_pressure_okay))
-        muscle_actions.ctx.store = {}
-        muscle_actions.ctx.stored_keys = {}
+        clear_all_ctx()
 
     def test_muscle_object_contract_pressure_not_okay(self):
         muscle = muscle_actions.parse_muscle({
@@ -36,8 +42,7 @@ class MuscleTest(unittest.TestCase):
 			"valve": 24,
 		}, "test")
         self.assertFalse(muscle_actions.contract(muscle,mock_pressure_not_okay))
-        muscle_actions.ctx.store = {}
-        muscle_actions.ctx.stored_keys = {}
+        clear_all_ctx()
 
     def test_muscle_object_relax_pressure_okay(self):
         muscle = muscle_actions.parse_muscle({
@@ -45,8 +50,7 @@ class MuscleTest(unittest.TestCase):
 			"valve": 24,
 		}, "test")
         self.assertTrue(muscle_actions.relax(muscle,mock_pressure_okay))
-        muscle_actions.ctx.store = {}
-        muscle_actions.ctx.stored_keys = {}
+        clear_all_ctx()
 
     def test_muscle_object_relax_pressure_okay(self):
         muscle = muscle_actions.parse_muscle({
@@ -54,8 +58,7 @@ class MuscleTest(unittest.TestCase):
 			"valve": 24,
 		}, "test")
         self.assertFalse(muscle_actions.relax(muscle,mock_pressure_not_okay))
-        muscle_actions.ctx.store = {}
-        muscle_actions.ctx.stored_keys = {}
+        clear_all_ctx()
 
 
 if __name__ == '__main__':
