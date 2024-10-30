@@ -3,9 +3,10 @@ import json
 import logging
 from collections import OrderedDict
 from contextlib import contextmanager
-from dataclasses import dataclass, field
-from functools import reduce, wraps
+from dataclasses import dataclass
+from functools import wraps
 
+from .util import wraps_method_decorator
 from .utils.logger import configure_logger
 
 
@@ -24,12 +25,7 @@ DEVICE_CONTEXT_COLLECTION = {}
 
 
 def check_only_class_instance(ctx: Context, x: any):
-    # Type checking for the allowed classes
-    # WARNING: This does not use isinstance() due to issues with class decorators
-    try:
-        return x.__wrap in map(lambda cls: cls.__wrap, ctx.allowed_classes)
-    except AttributeError:
-        return False
+    return isinstance(x, ctx.allowed_classes)
 
 
 def register_device(ctx: Context, name: str, device):
@@ -44,13 +40,6 @@ def register_device(ctx: Context, name: str, device):
     ctx.stored_keys.add(name)
 
 
-def wrap_device(cls):
-    """Decorator to wrap a device class."""
-    if not hasattr(cls, "__wrap"):
-        cls.__wrap = cls.__name__
-    return cls
-
-
 def create_generic_context(
     generic_device_name: str,
     device_classes: list,
@@ -61,7 +50,6 @@ def create_generic_context(
         device_classes = tuple(device_classes)
     elif not isinstance(device_classes, tuple):
         device_classes = (device_classes,)
-    device_classes = list(map(wrap_device, device_classes))
 
     ctx = Context(
         allowed_classes=device_classes,
@@ -170,6 +158,7 @@ def identifier(ctx: Context):
     return Identifier(ctx)
 
 
+@wraps_method_decorator("__init__")
 def device(cls):
     original_init = cls.__init__
     needsIdentifier = "_identifier" in inspect.signature(original_init).parameters
@@ -209,7 +198,7 @@ def device(cls):
         original_init(self, **new_kwargs)
 
     cls.__init__ = new_init
-    return wrap_device(cls)
+    return cls
 
 
 def open_json(file_name: str = "pinconfig.json"):
@@ -312,3 +301,42 @@ def configure_device_w_context(
             ctx.on_exit()
     logging.info("Successfully Exiting system...")
     logging.shutdown()
+
+
+def delete_component(ctx: Context, name: str):
+    """Util function to delete a component from the context.
+    Args:
+        ctx (Context): The context from which to delete the component.
+        name (str): The name of the component to delete.
+    """
+    if name not in ctx.stored_keys:
+        return
+    del ctx.store[name]
+    ctx.stored_keys.remove(name)  # Remove from stored keys
+    logging.info(f"{name} deleted from {ctx}")  # Log the deletion
+    # Remove from masked contexts
+    for masked_ctx in ctx.masked_device_contexts:
+        if name in DEVICE_CONTEXT_COLLECTION[masked_ctx].stored_keys:
+            delete_component(DEVICE_CONTEXT_COLLECTION[masked_ctx], name)
+
+
+def clear_context(ctx: Context):
+    """Clear all components from the context.
+    Args:
+        ctx (Context): The context to clear.
+    """
+    ctx.store.clear()
+    ctx.stored_keys.clear()
+    logging.info(f"All components cleared from {ctx}")  # Log the clearing
+    # Clear masked contexts
+    for masked_ctx in ctx.masked_device_contexts:
+        clear_context(
+            DEVICE_CONTEXT_COLLECTION[masked_ctx]
+        )  # Recursively clear masked contexts
+
+
+def clear_all_contexts():
+    """Clear all contexts."""
+    for ctx in DEVICE_CONTEXT_COLLECTION.values():
+        clear_context(ctx)  # Clear each context
+    logging.info("All contexts cleared.")  # Log the clearing
