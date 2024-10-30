@@ -27,7 +27,11 @@ def check_only_class_instance(ctx: Context, x: any):
     # Type checking for the allowed classes
     # WARNING: This does not use isinstance() due to issues with class decorators
     print("Checking types:", map(lambda cls: cls.__wrap, ctx.allowed_classes), x.__wrap)
-    return x.__wrap in map(lambda cls: cls.__wrap, ctx.allowed_classes)
+    return (
+        False
+        if not isinstance(x, object)
+        else x.__wrap in map(lambda cls: cls.__wrap, ctx.allowed_classes)
+    )
 
 
 def register_device(ctx: Context, name: str, device):
