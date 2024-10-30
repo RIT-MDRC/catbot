@@ -27,11 +27,6 @@ def check_only_class_instance(ctx: Context, x: any):
     # Type checking for the allowed classes
     # WARNING: This does not use isinstance() due to issues with class decorators
     try:
-        print(
-            "Checking types:",
-            map(lambda cls: cls.__wrap, ctx.allowed_classes),
-            x.__wrap,
-        )
         return x.__wrap in map(lambda cls: cls.__wrap, ctx.allowed_classes)
     except AttributeError:
         return False
@@ -49,6 +44,13 @@ def register_device(ctx: Context, name: str, device):
     ctx.stored_keys.add(name)
 
 
+def wrap_device(cls):
+    """Decorator to wrap a device class."""
+    if not hasattr(cls, "__wrap"):
+        cls.__wrap = cls.__name__
+    return cls
+
+
 def create_generic_context(
     generic_device_name: str,
     device_classes: list,
@@ -59,6 +61,8 @@ def create_generic_context(
         device_classes = tuple(device_classes)
     elif not isinstance(device_classes, tuple):
         device_classes = (device_classes,)
+    device_classes = list(map(wrap_device, device_classes))
+
     ctx = Context(
         allowed_classes=device_classes,
         parse_device=parser_func,
@@ -206,8 +210,7 @@ def device(cls):
         original_init(self, **new_kwargs)
 
     cls.__init__ = new_init
-    cls.__wrap = name
-    return cls
+    return wrap_device(cls)
 
 
 def open_json(file_name: str = "pinconfig.json"):
