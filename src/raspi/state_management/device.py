@@ -1,4 +1,3 @@
-import functools
 import inspect
 import json
 import logging
@@ -25,8 +24,10 @@ DEVICE_CONTEXT_COLLECTION = {}
 
 
 def check_only_class_instance(ctx: Context, x: any):
-    return isinstance(x, ctx.allowed_classes)
-    # return reduce(lambda res, y: res or isinstance(x, y), ctx.allowed_classes, False)
+    # Type checking for the allowed classes
+    # WARNING: This does not use isinstance() due to issues with class decorators
+    print("Checking types:", map(lambda cls: cls.__wrap, ctx.allowed_classes), x.__wrap)
+    return x.__wrap in map(lambda cls: cls.__wrap, ctx.allowed_classes)
 
 
 def register_device(ctx: Context, name: str, device):
@@ -158,61 +159,48 @@ def identifier(ctx: Context):
     return Identifier(ctx)
 
 
-def class_wraps(cls):
-    """functools wrapper for classes"""
-
-    def decorator(wrapper_cls):
-        for attr in functools.WRAPPER_ASSIGNMENTS:
-            if hasattr(cls, attr):
-                setattr(wrapper_cls, attr, getattr(cls, attr))
-        return wrapper_cls
-
-    return decorator
-
-
 def device(cls):
-    """Class wrapper that will register any sub modules in the sub module context before running the wrapped class's init."""
-    needsIdentifier = "_identifier" in inspect.signature(cls.__init__).parameters
+    name = cls.__name__
+    original_init = cls.__init__
+    needsIdentifier = "_identifier" in inspect.signature(original_init).parameters
     identifier_attrs = {
         k: v.ctx for k, v in cls.__dict__.items() if isinstance(v, Identifier)
     }
 
-    @class_wraps(cls)
-    class WrappedCls(cls):
-        def __init__(self, _identifier: str, **kwargs):
-            """This new init will check for any identifiers and register them in the context before running the wrapped class's init."""
+    @wraps(original_init)
+    def new_init(self, _identifier: str, **kwargs):
+        def convert_value(key, value):
+            if key not in identifier_attrs or check_only_class_instance(
+                (ctx := identifier_attrs[key]), value
+            ):
+                # irrelevant attribute values
+                return value
 
-            def convert_value(key, value):
-                """This function checks looks for any sub modules that needs to be instanstiated and if it does it will register it in the sub module context and return the identifier for the device."""
-                if key not in identifier_attrs or check_only_class_instance(
-                    (ctx := identifier_attrs[key]), value
-                ):
-                    # irrelevant attribute values
-                    return value
+            if isinstance(value, str):
+                # identifier
+                if not (value in ctx.store or value in ctx.stored_keys):
+                    raise ValueError(
+                        f"{ctx}: {value} does not exist. Unique identifiers: \n{ctx.stored_keys}"
+                    )
+                if not value in ctx.stored_keys:
+                    ctx.stored_keys.add(value)
 
-                if isinstance(value, str):
-                    # identifier
-                    if not (value in ctx.store or value in ctx.stored_keys):
-                        raise ValueError(
-                            f"{ctx}: {value} does not exist. Unique identifiers: \n{ctx.stored_keys}"
-                        )
-                    if not value in ctx.stored_keys:
-                        ctx.stored_keys.add(value)
+                return value
 
-                    return value
+            # when an attribute's parameter is passed in as an attribute value
+            newDevice = ctx.parse_device(value, _identifier=_identifier)
+            newKey = f"{_identifier}.{key}"
+            register_device(ctx, newKey, newDevice)
+            return newKey
 
-                # when an attribute's parameter is passed in as an attribute value
-                newDevice = ctx.parse_device(value, _identifier=_identifier)
-                newKey = f"{_identifier}.{key}"
-                register_device(ctx, newKey, newDevice)
-                return newKey
+        new_kwargs = {k: convert_value(k, v) for k, v in kwargs.items()}
+        if needsIdentifier:
+            new_kwargs["_identifier"] = _identifier
+        original_init(self, **new_kwargs)
 
-            new_kwargs = {k: convert_value(k, v) for k, v in kwargs.items()}
-            if needsIdentifier:
-                new_kwargs["_identifier"] = _identifier
-            super.__init__(self, **new_kwargs)
-
-    return WrappedCls
+    cls.__init__ = new_init
+    cls.__wrap = name
+    return cls
 
 
 def open_json(file_name: str = "pinconfig.json"):
