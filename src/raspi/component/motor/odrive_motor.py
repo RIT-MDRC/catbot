@@ -18,6 +18,7 @@ from state_management import (
 db = cantools.database.load_file("src/raspi/component/motor/odrive-cansimple.dbc")
 
 @device
+@dataclass()
 class ODriveMotor:
     axisID: int
     bus: can_bus.CanBus = identifier(can_bus.ctx)
