@@ -24,8 +24,11 @@ def hydrate_screen():
     """Post setup for the screen (after pygame.init() and global variable are set)"""
     logging.info("Hydrating Screen with initial values")
     logging.info("Hydrating Screen with initial values")
+    render_row(0, f"Position: {odrive_action.get_current_position(motor)}")
+    render_row(1, f"Velocity: {odrive_action.get_current_velocity(motor)}")
     render_left_status(False)
     render_right_status(False)
+
     update_screen()
     logging.info("Screen Hydrated")
     logging.info("Completed Screen Update Events")
@@ -37,6 +40,8 @@ def main():
     """Main program loop"""
     exit = False
     while not exit:
+        render_row(0, f"Position: {odrive_action.get_current_position(motor)}")
+        render_row(1, f"Velocity: {odrive_action.get_current_velocity(motor)}")
         for event in get_keys():
             if is_event_type(event, "down"):
                 if is_key_pressed(event, ["a", "left"]):
