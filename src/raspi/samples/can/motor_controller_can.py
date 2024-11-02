@@ -4,7 +4,7 @@ import math
 import time
 
 # initialize can messages and bus
-db = cantools.database.load_file("src/raspi/odrive-cansimple.dbc")
+db = cantools.database.load_file("src/raspi/component/motor/odrive-cansimple.dbc")
 print(db.messages)
 
 bus = can.Bus("can0", bustype = "socketcan")

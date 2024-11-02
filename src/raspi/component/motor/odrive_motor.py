@@ -25,6 +25,7 @@ class ODriveMotor:
     current_state : MotorState = MotorState.UNDEFINED
     current_position: float = None
     current_velocity: float = None
+    default_state : MotorState = MotorState.CLOSED_LOOP_CONTROL
 
     def __post_init__(self):
         can_bus.add_listener(self.bus, self.axisID, lambda msg: read_message(self, msg))
@@ -37,8 +38,9 @@ def read_message(motor, msg):
             data = msg_db.decode(msg.data)
             state = data['Axis_State'].value
             motor.current_state = state
-            logging.info("Heartbeat w/ state: " + state)
+            logging.info("Heartbeat w/ state: " + str(state))
             axis_error = data['Axis_Error']
+            print
             if get_error_num(axis_error) != 0:
                 logging.error("Axis Error w/ following data: " + axis_error)
         case "Get_Motor_Error": #0x03
@@ -51,6 +53,7 @@ def read_message(motor, msg):
             data = msg_db.decode(msg.data)
             motor.current_position = data['Pos_Estimate']
             motor.current_velocity = data['Vel_Estimate']
+            print("Estimates Updated")
             pass
         case "Get_Encoder_Count": #0x0A
             pass
@@ -111,6 +114,10 @@ def set_limits(motor: ODriveMotor, velocity_limit: float, current_limit: float) 
 @device_action(ctx)
 def request_set_state(motor: ODriveMotor, state: MotorState) -> bool:
     return send_message(motor, "Set_Axis_State", {'Axis_Requested_State': state})
+
+@device_action(ctx)
+def calibrate(motor) -> bool:
+    pass
 
 @device_action(ctx)
 def get_state(motor: ODriveMotor) -> MotorState:

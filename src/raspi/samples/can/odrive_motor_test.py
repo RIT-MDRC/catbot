@@ -10,15 +10,11 @@ configure_device("src/raspi/pinconfig.json")
 
 can_bus = "can_bus_1"
 motor = "odrive_1"
+speed = 15
 
-odrive_action.request_set_state(motor, MotorState.FULL_CALIBRATION_SEQUENCE)
+odrive_action.set_controller_mode(motor, ControlMode.VELOCITY_CONTROL, InputMode.VEL_RAMP)
+odrive_action.request_set_state(motor, MotorState.CLOSED_LOOP_CONTROL)
 
-while odrive_action.get_state(motor) != MotorState.IDLE:
-    print(f"Current state: {odrive_action.get_state(motor)}.")
-    print(f"Current position: {odrive_action.get_current_position(motor)}.")
-    print(f"Current velocity: {odrive_action.get_current_velocity(motor)}.")
-    print("")
-    pass
 
 def hydrate_screen():
     """Post setup for the screen (after pygame.init() and global variable are set)"""
@@ -33,25 +29,29 @@ def hydrate_screen():
     logging.info("Screen Hydrated")
     logging.info("Completed Screen Update Events")
 
-LEFT_SPEED = 0.1  # unit: rev/s
-RIGHT_SPEED = -0.1  # unit: rev/s
 
 def main():
     """Main program loop"""
     exit = False
+    global speed
     while not exit:
         render_row(0, f"Position: {odrive_action.get_current_position(motor)}")
         render_row(1, f"Velocity: {odrive_action.get_current_velocity(motor)}")
+        render_row(4, f"Target Speed: {speed}")
         for event in get_keys():
             if is_event_type(event, "down"):
                 if is_key_pressed(event, ["a", "left"]):
                     print("left call")
-                    if odrive_action.set_target_velocity(motor, LEFT_SPEED):
+                    if odrive_action.set_target_velocity(motor, -speed):
                         render_left_status(True)
                 elif is_key_pressed(event, ["d", "right"]):
                     print("right call")
-                    if odrive_action.set_target_velocity(motor, RIGHT_SPEED):
+                    if odrive_action.set_target_velocity(motor, speed):
                         render_right_status(True)
+                elif is_key_pressed(event, ["w", "up"]):
+                    speed += 1
+                elif is_key_pressed(event, ["down"]):
+                    speed -= 1
                 elif is_key_pressed(event, ["q"]):
                     exit = True
             elif is_event_type(event, "up"):
