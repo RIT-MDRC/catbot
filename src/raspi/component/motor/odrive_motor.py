@@ -15,10 +15,9 @@ from state_management import (
     identifier
 )
 
-db = cantools.database.load_file("src/raspi/odrive-cansimple.dbc")
+db = cantools.database.load_file("src/raspi/component/motor/odrive-cansimple.dbc")
 
 @device
-@dataclass(slots = True)
 class ODriveMotor:
     axisID: int
     bus: can_bus.CanBus = identifier(can_bus.ctx)
@@ -91,6 +90,10 @@ def set_target_position(motor: ODriveMotor, position: float, velocity_FF: float 
 @device_action(ctx)
 def set_target_velocity(motor: ODriveMotor, velocity: float, torque_FF: float = 0.0) -> bool:
     return send_message(motor, "Set_Input_Vel", {'Input_Vel': velocity, 'Input_Torque_FF': torque_FF})
+
+@device_action(ctx)
+def stop(motor: ODriveMotor) -> bool:
+    return set_target_velocity(motor, 0)
 
 @device_action(ctx)
 def get_current_position(motor: ODriveMotor) -> float:
