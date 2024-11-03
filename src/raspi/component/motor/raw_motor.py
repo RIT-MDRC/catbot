@@ -1,5 +1,5 @@
 from asyncio import sleep
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from gpiozero import DigitalOutputDevice, PWMOutputDevice
 from state_management import (
@@ -14,11 +14,12 @@ from .pin import direction_pin_action, speed_pin_action
 
 
 @device
-@dataclass(slots=True)
+@dataclass
 class RawMotor:
     """A data class for a raw motor."""
 
     stop_duration: float
+    _identifier: str = field(default="latch")
     speed: PWMOutputDevice = identifier(speed_pin_action.ctx)
     direction: DigitalOutputDevice = identifier(direction_pin_action.ctx)
 
@@ -42,7 +43,6 @@ def set_speed(raw_motor: RawMotor, speed: float) -> bool:
 def get_speed(raw_motor: RawMotor) -> float:
     """Get the speed of a raw motor."""
     return speed_pin_action.get(raw_motor.speed)
-
 
 
 @device_action(ctx)
@@ -75,7 +75,7 @@ def get_direction(raw_motor: RawMotor) -> int:
 @device_action(ctx)
 async def set_direction(raw_motor: RawMotor, direction: int) -> bool:
     """Set the direction of a raw motor."""
-    
+
     if check_direction(raw_motor, direction):
         return True
     if not get_speed(raw_motor) == 0 and not await stop(raw_motor):

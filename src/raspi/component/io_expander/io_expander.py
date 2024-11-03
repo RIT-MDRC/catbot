@@ -1,9 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 
-
 import busio
-from state_management.utils import is_dev, FakeMCP23017, FakeDirection, FakePull
 from gpiozero import DigitalInputDevice
 from state_management import (
     create_context,
@@ -13,13 +11,14 @@ from state_management import (
     input_device_ctx,
     register_device,
 )
+from state_management.utils import FakeDirection, FakeMCP23017, FakePull, is_dev
 
 from . import interrupt_pin_action
 
 if not is_dev():
     import board
+    from adafruit_mcp230xx.mcp23017 import MCP23017
     from digitalio import Direction, Pull
-    from adafruit_mcp230xx.mcp23017 import MCP23017, DigitalInOut
 
 # Plugin for IOExpander. Set this to True in the sample script file if you use a component that uses the IOExpander
 USE = False

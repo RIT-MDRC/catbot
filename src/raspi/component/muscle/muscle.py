@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from gpiozero import DigitalInputDevice, DigitalOutputDevice
 from state_management import (
@@ -22,6 +22,7 @@ class MuscleObj:
         valve (str): the name of the valve
     """
 
+    _identifier: str = field(default="latch")
     pressure: DigitalInputDevice = identifier(pressure_actions.ctx)
     valve: DigitalOutputDevice = identifier(valve_actions.ctx)
 

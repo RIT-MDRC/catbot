@@ -74,12 +74,12 @@ class Latch:
     pins: dict[str, int]
     queue: list[tuple[str, int]] = field(default_factory=list)
     lock: bool = False
+    _identifier: str = field(default="latch")
     data: DigitalOutputDevice = identifier(latch_pin_actions.data_pin_ctx)
     enab: DigitalOutputDevice = identifier(latch_pin_actions.enab_pin_ctx)
     addr_1: DigitalOutputDevice = identifier(latch_pin_actions.addr_pin_ctx)
     addr_2: DigitalOutputDevice = identifier(latch_pin_actions.addr_pin_ctx)
     addr_3: DigitalOutputDevice = identifier(latch_pin_actions.addr_pin_ctx)
-    _identifier: str = field(default="latch")
 
     def set(self, addr: str, state: int) -> None:
         self.queue.append((addr, state))

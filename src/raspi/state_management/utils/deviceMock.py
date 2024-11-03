@@ -1,6 +1,6 @@
 import logging
-from functools import wraps
 from enum import Enum
+from functools import wraps
 
 
 def value_change(func: callable) -> callable:
@@ -59,7 +59,13 @@ class FakeDigitalInputDevice:
     when_activated = None
     when_deactivated = None
 
-    def __init__(self, pin: int, initial_value: int = 0, initial_is_state=False):
+    def __init__(
+        self,
+        pin: int,
+        initial_value: int = 0,
+        initial_is_state=False,
+        pull_up=False,
+    ):
         self.pin = pin
         self.value = initial_value
         self.is_active = initial_is_state
@@ -348,10 +354,10 @@ class FakeSMBus:
 
 
 class FakeMCP23017:
-    interrupt_enable : int
-    interrupt_configuration : int
-    io_control : int
-    int_flag : list
+    interrupt_enable: int
+    interrupt_configuration: int
+    io_control: int
+    int_flag: list
 
     def __init__(self):
         pass
@@ -390,5 +396,3 @@ class FakeDirection(Enum):
 class FakePull(Enum):
     UP = True
     DOWN = False
-
-

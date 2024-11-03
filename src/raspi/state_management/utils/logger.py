@@ -1,7 +1,9 @@
 import logging
+import os
 from datetime import datetime as d
 
 import __main__
+import dotenv
 
 LOG_LEVEL = {
     "Debug": logging.DEBUG,
@@ -32,8 +34,12 @@ def configure_logger(level: str = "Debug"):
     print(f"Configuring logger {lvl}...")
     start_time = d.now().strftime("%Y-%m-%d.%H:%M:%S")
     filename = __main__.__file__.split("/")[-1].split(".")[0]
+    workspace = dotenv.dotenv_values(".env").get("WORKSPACE_PATH")
+    workspace = workspace if workspace is not None else "."
     logging.basicConfig(
-        filename=f".log/{start_time}.{filename}.{level}.log",
+        filename=os.path.join(
+            workspace, ".log", f"{start_time}.{filename}.{level}.log"
+        ),
         format="%(filename)s: %(message)s",
         level=lvl,  # TODO: hook it to env or config file
         force=True,

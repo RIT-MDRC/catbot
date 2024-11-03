@@ -14,7 +14,7 @@ RIGHT_SPEED = -0.1  # unit: %
 
 def setup():
     """Setup the pins and pygame"""
-    configure_device("src/raspi/pinconfig.json")
+    configure_device("pinconfig.json")
     logging.info("Initialized components from pinconfig")
 
 

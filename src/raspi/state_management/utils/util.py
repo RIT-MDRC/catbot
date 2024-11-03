@@ -19,7 +19,7 @@ def is_dev() -> bool:
 
     :return: True if the environment is set to development, False otherwise
     """
-    config_data = dotenv_values("src/raspi/.env")
+    config_data = dotenv_values(".env")
     if config_data is None:
         raise ValueError("No config file found. Create a .env file in src/raspi")
     return config_data.get("ENV") == "dev"

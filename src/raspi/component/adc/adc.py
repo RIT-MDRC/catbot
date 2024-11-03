@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from component.smbus import smbus_actions
 from state_management import (
@@ -54,7 +54,7 @@ class ADC:
     address: int
     input_devices: dict
     power_down: int
-    _identifier: str
+    _identifier: str = field(default="adc")
     i2c: smbus_actions.SMBus = identifier(smbus_actions.ctx)
 
     def read_data(self, register: list, start_register=0x00):
