@@ -1,5 +1,7 @@
 import unittest
-from ....raspi.component.motor import motor
+
+from component.motor import motor
+
 
 class adc_unit_tests(unittest.TestCase):
 
@@ -8,5 +10,5 @@ class adc_unit_tests(unittest.TestCase):
         self.assertEqual(results.pwm_pin, 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

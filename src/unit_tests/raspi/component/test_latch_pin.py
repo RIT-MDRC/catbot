@@ -1,6 +1,8 @@
 import unittest
-from ....raspi.component.latch.pin import pin
-from ....raspi.state_management.utils import FakeDigitalOutputDevice
+
+from component.latch.pin import pin
+from state_management.utils import FakeDigitalOutputDevice
+
 
 class latch_pin_unit_tests(unittest.TestCase):
 
@@ -10,13 +12,11 @@ class latch_pin_unit_tests(unittest.TestCase):
         pin.set_addr(test_device, test_state)
         self.assertEqual(test_device.value, 1)
 
-    
     def test_set_addr_WhenStateLessThanOrEqualToZero_SetValueToZero(self):
         test_state = 0
         test_device = FakeDigitalOutputDevice(0, 1)
         pin.set_addr(test_device, test_state)
         self.assertEqual(test_device.value, 0)
-
 
     def test_get_addr_Always_GetsValue(self):
         test_value = 1
@@ -24,5 +24,5 @@ class latch_pin_unit_tests(unittest.TestCase):
         self.assertEqual(results, test_value)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

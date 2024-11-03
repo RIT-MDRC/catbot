@@ -1,8 +1,9 @@
 {
-  "[python]": {
-    "editor.defaultFormatter": "ms-python.black-formatter"
-  },
-  "C_Cpp.default.includePath": [
-    "${workspaceFolder}/src/arduino/libraries/**"
-  ]
+	"[python]": {
+		"editor.defaultFormatter": "ms-python.black-formatter"
+	},
+	"C_Cpp.default.includePath": [
+		"${workspaceFolder}/src/arduino/libraries/**"
+	],
+	"python.analysis.extraPaths": ["./src/raspi"]
 }
