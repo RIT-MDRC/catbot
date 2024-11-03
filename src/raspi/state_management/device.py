@@ -28,22 +28,28 @@ def check_only_class_instance(ctx: Context, x: any):
     return isinstance(x, ctx.allowed_classes)
 
 
+def gen_valid_identifier(ctx: Context, x: any):
+    if x in ctx.stored_keys:
+        count = 1
+        while (name := f"{x}_{count}") in ctx.stored_keys:
+            count += 1
+        logging.warning(
+            f"Device by the name of {x} already exists. Using {name} instead."
+        )
+        return name
+    return x
+
+
 def register_device(ctx: Context, name: str, device):
     if not check_only_class_instance(ctx, device):
         raise ValueError(
             f"{device} must be a identifier(string) or "
             + "/".join([x.__name__ for x in ctx.allowed_classes])
         )
-    if name in ctx.stored_keys:
-        name_old = name
-        count = 1
-        while (name := f"{name}_{count}") in ctx.stored_keys:
-            count += 1
-        logging.warning(
-            f"Device by the name of {name_old} already exists. Using {name} instead."
-        )
+    name = gen_valid_identifier(ctx, name)
     ctx.store[name] = device
     ctx.stored_keys.add(name)
+    return name
 
 
 def create_generic_context(
@@ -195,8 +201,7 @@ def device(cls):
             # when an attribute's parameter is passed in as an attribute value
             newDevice = ctx.parse_device(value, _identifier=_identifier)
             newKey = f"{_identifier}.{key}"
-            register_device(ctx, newKey, newDevice)
-            return newKey
+            return register_device(ctx, newKey, newDevice)
 
         new_kwargs = {k: convert_value(k, v) for k, v in kwargs.items()}
         if needsIdentifier:
@@ -282,8 +287,9 @@ def configure_device(
                 register_device(ctx, masked_key, casting_device)
             del config["__cast"]
         for key, device_attr in config.items():
-            device = ctx.parse_device(device_attr, _identifier=key)
-            register_device(ctx, key, device)
+            new_key = gen_valid_identifier(ctx, key)
+            device = ctx.parse_device(device_attr, _identifier=new_key)
+            register_device(ctx, new_key, device)
 
     log_states()
     logging.info("Device configuration complete")
