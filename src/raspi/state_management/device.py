@@ -37,9 +37,8 @@ def register_device(ctx: Context, name: str, device):
     if name in ctx.stored_keys:
         name_old = name
         count = 1
-        while f"{name}_{count}" in ctx.stored_keys:
+        while (name := f"{name}_{count}") in ctx.stored_keys:
             count += 1
-        name = f"{name}_{count}"
         logging.warning(
             f"Device by the name of {name_old} already exists. Using {name} instead."
         )
