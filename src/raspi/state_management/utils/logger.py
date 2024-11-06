@@ -32,8 +32,9 @@ def configure_logger(level: str = "Debug"):
     """
     lvl = map_level(level)
     print(f"Configuring logger {lvl}...")
-    start_time = d.now().strftime("%Y-%m-%d.%H:%M:%S")
-    filename = __main__.__file__.split("/")[-1].split(".")[0]
+    start_time = d.now().strftime("%Y-%m-%d.%H-%M-%S")
+    print(__main__.__file__)
+    filename = os.path.basename(__main__.__file__).split(".")[0]
     workspace = dotenv.dotenv_values(".env").get("WORKSPACE_PATH")
     workspace = workspace if workspace is not None else "."
     logging.basicConfig(

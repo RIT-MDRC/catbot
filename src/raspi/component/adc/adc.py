@@ -41,6 +41,8 @@ def parse_analog_input_device(config: dict):
         address: int = address of the device on the adc
     }
     """
+    # TODO: Fix this shit (straight from the horses mouth)
+    del config["_identifier"]
     return ADCAnalogInputDevice(**config)
 
 
