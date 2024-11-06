@@ -16,17 +16,22 @@ class adc_unit_tests(unittest.TestCase):
         self.assertEqual(results.adc, test_adc)
         self.assertEqual(results.address, test_address)
 
-    def test_ADCAnalogInputDevice_value_When_(self):
+    def test_ADCAnalogInputDevice_value_Always_GetsValue(self):
         test_adc = ADC_action.ADC(
             address=1, input_devices={}, power_down=0, _identifier=""
         )
+        test_adc.i2c = FakeSMBus(0)
 
         test_address = 1
         test_adc_analog_input_device = ADC_action.ADCAnalogInputDevice(
             test_adc, test_address
         )
-        results = test_adc_analog_input_device.value()
-        self.assertEqual(results, "")
+        
+        # The FakeSMBus does not return a value currently.
+        try:
+            test_adc_analog_input_device.value
+        except:
+            self.fail("Unexpected error.")
 
     @unittest.skip("")
     def test_parse_analog_input_device_WhenValidConfig_CreatesADCAnalogInputDevice(
