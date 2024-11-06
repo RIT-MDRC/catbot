@@ -1,5 +1,6 @@
 {
-  "recommendations": [
-    "textualize.textual-syntax-highlighter"
-  ]
+	"recommendations": [
+		"textualize.textual-syntax-highlighter",
+		"ms-python.black-formatter"
+	]
 }
