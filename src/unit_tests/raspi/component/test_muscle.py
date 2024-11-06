@@ -21,7 +21,7 @@ class MuscleTest(unittest.TestCase):
         cls.muscle = muscle_actions.parse_muscle(
             {
                 "pressure": 0,
-                "valve": 24,
+                "valve": FakeDigitalOutputDevice(24),
             },
             "muscle",
         )
@@ -42,7 +42,7 @@ class MuscleTest(unittest.TestCase):
     def test_muscle_object_relax_pressure_okay(self):
         self.assertTrue(muscle_actions.relax(self.muscle, mock_pressure_okay))
 
-    def test_muscle_object_relax_pressure_okay(self):
+    def test_muscle_object_relax_pressure_not_okay(self):
         self.assertFalse(muscle_actions.relax(self.muscle, mock_pressure_not_okay))
 
 
