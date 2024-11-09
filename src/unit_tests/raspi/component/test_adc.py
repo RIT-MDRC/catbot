@@ -16,6 +16,7 @@ class adc_unit_tests(unittest.TestCase):
         self.assertEqual(results.adc, test_adc)
         self.assertEqual(results.address, test_address)
 
+
     def test_ADCAnalogInputDevice_value_Always_GetsValue(self):
         test_adc = ADC_action.ADC(
             address=1, input_devices={}, power_down=0, _identifier=""
@@ -33,7 +34,7 @@ class adc_unit_tests(unittest.TestCase):
         except:
             self.fail("Unexpected error.")
 
-    @unittest.skip("")
+    
     def test_parse_analog_input_device_WhenValidConfig_CreatesADCAnalogInputDevice(
         self,
     ):
@@ -43,7 +44,7 @@ class adc_unit_tests(unittest.TestCase):
             ),
             "address": 1,
         }
-        # TODO: Fix the _identifier error.
+        
         results = ADC_action.parse_analog_input_device(config, _identifier="")
         self.assertEqual(results.adc, config["adc"])
         self.assertEqual(results.address, config["address"])

@@ -3,7 +3,7 @@ import logging
 from state_management import create_generic_context, device_action, device_parser
 from state_management.utils import FakeSMBus as SMBus, is_dev
 
-if is_dev():
+if not is_dev():
     from smbus2 import SMBus
 
 ctx = create_generic_context("smbus2", (SMBus))

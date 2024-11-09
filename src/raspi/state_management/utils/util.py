@@ -22,7 +22,8 @@ def is_dev() -> bool:
     config_data = dotenv_values(".env")
     if config_data is None:
         raise ValueError("No config file found. Create a .env file in src/raspi")
-    return config_data.get("ENV") == "dev"
+    # TODO: was getting None until a default was provided, adding a default is a temporary fix.
+    return os.environ.get("ENV", "dev") == "dev"
 
 
 def create_input_device(pin: int, onDev: callable = None):
