@@ -100,15 +100,15 @@ def parse_odrive(data: dict) -> ODriveMotor:
 
 @device_action(ctx)
 def set_target_position(motor: ODriveMotor, position: float, velocity_FF: float = 0.0, torque_FF: float = 0.0) -> bool:
+    """Set the target position for this motor
+    Only use this function if Control Mode is set to POSITION_CONTROL"""
     return send_message(motor, "Set_Input_Pos", {'Input_Pos': position, 'Vel_FF': velocity_FF, 'Torque_FF': torque_FF})
 
 @device_action(ctx)
 def set_target_velocity(motor: ODriveMotor, velocity: float, torque_FF: float = 0.0) -> bool:
+    """Set the target velocity for this motor
+    Only use this function if Control Mode is set to VELOCITY_CONTROL"""
     return send_message(motor, "Set_Input_Vel", {'Input_Vel': velocity, 'Input_Torque_FF': torque_FF})
-
-@device_action(ctx)
-def stop(motor: ODriveMotor) -> bool:
-    return set_target_velocity(motor, 0)
 
 @device_action(ctx)
 def get_current_position(motor: ODriveMotor) -> float:
@@ -120,10 +120,14 @@ def get_current_velocity(motor: ODriveMotor) -> float:
 
 @device_action(ctx)
 def set_limits(motor: ODriveMotor, velocity_limit: float, current_limit: float) -> bool:
+    """Set the velocity and current limits for this motor
+    Consider changing the motor's config instead of using this function"""
     return send_message(motor, "Set_Limits", {'Velocity_Limit': velocity_limit, 'Current_Limit': current_limit})
 
 @device_action(ctx)
 def request_set_state(motor: ODriveMotor, state: MotorState) -> bool:
+    """Set the state of the motor
+    Motor will not recieve position/velocity input if not set to CLOSED_LOOP_CONTROL"""
     return send_message(motor, "Set_Axis_State", {'Axis_Requested_State': state})
 
 @device_action(ctx)
