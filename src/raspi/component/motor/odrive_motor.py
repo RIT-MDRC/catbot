@@ -15,60 +15,70 @@ from state_management import (
     identifier
 )
 
-db = cantools.database.load_file("src/raspi/component/motor/odrive-cansimple.dbc")
+ODRIVE_CAN_DB = cantools.database.load_file("src/raspi/component/motor/odrive-cansimple.dbc")
 
 @device
-@dataclass()
+@dataclass
 class ODriveMotor:
     axisID: int
     bus: can_bus.CanBus = identifier(can_bus.ctx)
     current_state : MotorState = MotorState.UNDEFINED
     current_position: float = None
     current_velocity: float = None
-    default_state : MotorState = MotorState.CLOSED_LOOP_CONTROL
 
     def __post_init__(self):
         can_bus.add_listener(self.bus, self.axisID, lambda msg: read_message(self, msg))
 
+#region Message Handling
+
+EVENT_HANDLE = dict()
+EVENT_IGNORE = ["Get_Encoder_Count", "Get_IQ", "Get_Sensorless_Estimates", "Get_Bus_Voltage_Current", "Get_ADC_Voltage"]
+
 def read_message(motor, msg):
     msg_id = msg.arbitration_id & 0x1F
-    msg_db = db.get_message_by_frame_id(msg_id)
-    match msg_db.name:
-        case "Heartbeat": #0x01
-            data = msg_db.decode(msg.data)
-            state = data['Axis_State'].value
-            motor.current_state = state
-            logging.info("Heartbeat w/ state: " + str(state))
-            axis_error = data['Axis_Error']
-            print
-            if get_error_num(axis_error) != 0:
-                logging.error("Axis Error w/ following data: " + axis_error)
-        case "Get_Motor_Error": #0x03
-            logging.error("Motor Error w/ following data: " + msg_db.decode(msg.data))
-        case "Get_Encoder_Error": #0x04
-            logging.error("Encoder Error w/ following data: " + msg_db.decode(msg.data))
-        case "Get_Sensorless_Error": #0x05
-            logging.error("Sensorless Error w/ following data: " + msg_db.decode(msg.data))
-        case "Get_Encoder_Estimates": #0x09
-            data = msg_db.decode(msg.data)
-            motor.current_position = data['Pos_Estimate']
-            motor.current_velocity = data['Vel_Estimate']
-            print("Estimates Updated")
-            pass
-        case "Get_Encoder_Count": #0x0A
-            pass
-        case "Get_IQ": #0x14
-            pass
-        case "Get_Sensorless_Estimates": #0x15
-            pass
-        case "Get_Bus_Voltage_Current": #0x17
-            pass
-        case "Get_ADC_Voltage": #0x1C
-            pass
-        case "Get_Controller_Error": #0x1D
-            logging.error("Controller Error w/ following data: " + msg_db.decode(msg.data))
-        case _:
-            logging.warning(f"Unrecognized message \"{msg_db.name}\" recieved (id {hex(msg_id)})")
+    msg_db = ODRIVE_CAN_DB.get_message_by_frame_id(msg_id)
+    if msg_db.name in EVENT_HANDLE:
+        EVENT_HANDLE[msg_db.name](motor, msg_db.decode(msg.data))
+    elif msg_db.name not in EVENT_IGNORE:
+        logging.warning(
+            f'Unrecognized message "{msg_db.name}" recieved (id {hex(msg_id)})'
+        )
+
+def event_decorator(name):
+    def wrapper(func):
+        EVENT_HANDLE[name] = func
+        return func
+    return wrapper
+
+@event_decorator("Heartbeat")
+def read_heartbeat(motor, data):
+    state = data['Axis_State'].value
+    motor.current_state = state
+    logging.info(f"Axis {motor.axisID} Heartbeat w/ state: " + str(state))
+    axis_error = data['Axis_Error']
+    if get_error_num(axis_error) != 0:
+        logging.error(f"Axis {motor.axisID} Error w/ following data: " + axis_error)
+
+@event_decorator("Get_Encoder_Estimates")
+def update_estimates(motor, data):
+    motor.current_position = data['Pos_Estimate']
+    motor.current_velocity = data['Vel_Estimate']
+
+@event_decorator("Get_Motor_Error")
+def report_motor_error(motor, data):
+    logging.error(f"Motor Error on axis {motor.axisID} w/ following data: " + data)
+
+@event_decorator("Get_Encoder_Error")
+def report_encoder_error(motor, data):
+    logging.error(f"Encoder Error on axis {motor.axisID} w/ following data: " + data)
+
+@event_decorator("Get_Sensorless_Error")
+def report_sensorless_error(motor, data):
+    logging.error(f"Sensorless Error on axis {motor.axisID} w/ following data: " + data)
+
+@event_decorator("Get_Controller_Error")
+def report_controller_error(motor, data):
+    logging.error(f"Controller Error on axis {motor.axisID} w/ following data: " + data)
 
 def get_error_num(error):
     #errors are flags, which cantools does not properly handle
@@ -80,12 +90,13 @@ def get_error_num(error):
     else:
         return error.value
 
+#endregion
+
 ctx = create_generic_context("odrive_motor", [ODriveMotor])
 
 @device_parser(ctx)
 def parse_odrive(data: dict) -> ODriveMotor:
-    motor = ODriveMotor(**data)
-    return motor
+    return ODriveMotor(**data)
 
 @device_action(ctx)
 def set_target_position(motor: ODriveMotor, position: float, velocity_FF: float = 0.0, torque_FF: float = 0.0) -> bool:
@@ -116,10 +127,6 @@ def request_set_state(motor: ODriveMotor, state: MotorState) -> bool:
     return send_message(motor, "Set_Axis_State", {'Axis_Requested_State': state})
 
 @device_action(ctx)
-def calibrate(motor) -> bool:
-    pass
-
-@device_action(ctx)
 def get_state(motor: ODriveMotor) -> MotorState:
     """Returns the most recent state reported by the motor."""
     return motor.current_state
@@ -130,7 +137,7 @@ def set_controller_mode(motor: ODriveMotor, control_mode: ControlMode, input_mod
 
 @device_action(ctx)
 def send_message(motor: ODriveMotor, msg_name: str, data: dict) -> bool:
-    msg = db.get_message_by_name(msg_name)
+    msg = ODRIVE_CAN_DB.get_message_by_name(msg_name)
     msg_id = msg.frame_id | motor.axisID << 5
     data = msg.encode(data)
     return can_bus.send_message(motor.bus, msg_id, data)

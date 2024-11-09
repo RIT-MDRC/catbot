@@ -1,7 +1,7 @@
 import can
 import logging
 from typing import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from state_management import (
     create_generic_context,
@@ -10,24 +10,28 @@ from state_management import (
     device_parser,
 )
 
+DEFAULT_BUS_CONFIG = {"channel": "can0", "interface": "socketcan", "config_context": None, "ignore_config": False}
+
 @device
 @dataclass(slots = True)
 class CanBus:
-    bus: can.Bus
-    listeners: dict
-    notifier : can.Notifier
+    busConfig: dict = DEFAULT_BUS_CONFIG
+    bus: can.Bus = None
+    notifier : can.Notifier = None
+    listeners: dict = field(default_factory=dict)
 
-    def __init__(self,channel = "can0",interface = "socketcan",config_context = None, ignore_config = False, **kwargs):
-        self.bus = can.Bus(channel,interface,config_context,ignore_config,**kwargs)
-        self.listeners = {}
-        self.notifier = can.Notifier(self.bus, [lambda msg: read_message(self, msg)])
+    def __post_init__(self):
+        self.busConfig = {**DEFAULT_BUS_CONFIG, **self.busConfig}
+        self.bus = self.bus if self.bus else can.Bus(**self.busConfig) 
+        self.notifier = self.notifier if self.notifier else can.Notifier(self.bus, [lambda msg: read_message(self, msg)])
 
 def read_message(can_bus: CanBus, msg) -> None:
     axisId = msg.arbitration_id >> 5
+    logging.info("Received message with id " + hex(msg.arbitration_id))
     if axisId in can_bus.listeners:
         can_bus.listeners[axisId](msg)
     else:
-        logging.info("Unhandled message with id " + hex(msg.arbitration_id))
+        logging.warning("Unhandled message with id " + hex(msg.arbitration_id))
 
 ctx = create_generic_context("can_bus", [CanBus])
 
@@ -43,6 +47,7 @@ def send_message(bus: CanBus, arbitration_id: int, data, is_extended_id: bool = 
         bus.bus.send(msg)
         return True
     except can.CanError:
+        logging.error("Unable to send message on CAN bus.")
         return False
     
 @device_action(ctx)
@@ -60,5 +65,6 @@ def add_listener(bus: CanBus, axisID: int, callback: Callable[[object], None]) -
 
 @device_action(ctx)
 def close(bus: CanBus) -> None:
+    logging.info("Closing CAN Bus")
     bus.notifier.stop()
     bus.bus.shutdown()

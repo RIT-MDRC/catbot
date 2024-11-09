@@ -110,8 +110,6 @@
 	},
 	"can_bus": {
 		"can_bus_1": {
-			"channel": "can0",
-			"interface": "socketcan"
 		}
 	},
 	"odrive_motor": {
