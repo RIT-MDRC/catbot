@@ -56,10 +56,10 @@ def main():
                     exit = True
             elif is_event_type(event, "up"):
                 if is_key_pressed(event, ["a", "left"]):
-                    if odrive_action.stop(motor):
+                    if odrive_action.set_target_velocity(motor, 0):
                         render_left_status(False)
                 elif is_key_pressed(event, ["d", "right"]):
-                    if odrive_action.stop(motor):
+                    if odrive_action.set_target_velocity(motor, 0):
                         render_right_status(False)
         update_screen()
         clock_tick(60)

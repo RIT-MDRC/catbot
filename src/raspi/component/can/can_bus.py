@@ -15,10 +15,10 @@ DEFAULT_BUS_CONFIG = {"channel": "can0", "interface": "socketcan", "config_conte
 @device
 @dataclass(slots = True)
 class CanBus:
-    busConfig: dict = DEFAULT_BUS_CONFIG
+    busConfig : dict = field(default_factory=dict)
     bus: can.Bus = None
     notifier : can.Notifier = None
-    listeners: dict = field(default_factory=dict)
+    listeners : dict = field(default_factory=dict)
 
     def __post_init__(self):
         self.busConfig = {**DEFAULT_BUS_CONFIG, **self.busConfig}

@@ -57,7 +57,7 @@ def read_heartbeat(motor, data):
     logging.info(f"Axis {motor.axisID} Heartbeat w/ state: " + str(state))
     axis_error = data['Axis_Error']
     if get_error_num(axis_error) != 0:
-        logging.error(f"Axis {motor.axisID} Error w/ following data: " + axis_error)
+        logging.error(f"Axis {motor.axisID} Error w/ following data: " + str(axis_error))
 
 @event_decorator("Get_Encoder_Estimates")
 def update_estimates(motor, data):
@@ -66,19 +66,19 @@ def update_estimates(motor, data):
 
 @event_decorator("Get_Motor_Error")
 def report_motor_error(motor, data):
-    logging.error(f"Motor Error on axis {motor.axisID} w/ following data: " + data)
+    logging.error(f"Motor Error on axis {motor.axisID} w/ following data: " + str(data))
 
 @event_decorator("Get_Encoder_Error")
 def report_encoder_error(motor, data):
-    logging.error(f"Encoder Error on axis {motor.axisID} w/ following data: " + data)
+    logging.error(f"Encoder Error on axis {motor.axisID} w/ following data: " + str(data))
 
 @event_decorator("Get_Sensorless_Error")
 def report_sensorless_error(motor, data):
-    logging.error(f"Sensorless Error on axis {motor.axisID} w/ following data: " + data)
+    logging.error(f"Sensorless Error on axis {motor.axisID} w/ following data: " + str(data))
 
 @event_decorator("Get_Controller_Error")
 def report_controller_error(motor, data):
-    logging.error(f"Controller Error on axis {motor.axisID} w/ following data: " + data)
+    logging.error(f"Controller Error on axis {motor.axisID} w/ following data: " + str(data))
 
 def get_error_num(error):
     #errors are flags, which cantools does not properly handle
