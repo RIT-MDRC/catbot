@@ -1,0 +1,23 @@
+{
+	"name": "ROS 2 Dev Container",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"context": "."
+	},
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"terminal.integrated.shell.linux": "/bin/bash"
+			},
+			"extensions": [
+				"ms-python.python",
+				"ms-iot.vscode-ros"
+			]
+		}
+	},
+	"postCreateCommand": ". /workspaces/main-catbot/.venv/bin/activate && pip install -r /workspaces/main-catbot/requirements.txt || true",
+	"remoteUser": "root",
+	"remoteEnv": {
+		"MY_ENV_VAR": "my_value"
+	}
+}

@@ -1,0 +1,16 @@
+{
+  "configurations": [
+    {
+      "name": "Python Debugger: Current File for dev container",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/src/raspi/.env",
+      "preLaunchTask": "roslaunch: roslaunch",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src/raspi"
+      }
+    }
+  ]
+}

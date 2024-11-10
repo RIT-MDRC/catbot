@@ -1,6 +1,13 @@
 {
 	"recommendations": [
 		"textualize.textual-syntax-highlighter",
-		"ms-python.black-formatter"
+		"ms-python.black-formatter",
+		"ms-azuretools.vscode-docker",
+		"ms-python.python",
+		"ms-iot.vscode-ros",
+		"ms-vscode-remote.remote-containers",
+		"donjayamanne.githistory",
+		"donjayamanne.python-environment-manager",
+		"njqdev.vscode-python-typehint"
 	]
 }

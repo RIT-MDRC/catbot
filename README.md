@@ -4,6 +4,11 @@
 Quadruped Hybrid Pneumatic-Electric Robot. Utilizes McKibben Muscles for bio-inpired locomotion.
 
 ## Setup
+
+### Docker Dev Container
+* Install [Docker](https://docs.docker.com/get-docker/)
+* `ctrl+shift+p` -> `Dev Containers: Reopen in Container`
+
 ### Install dependencies
 * install [python](https://www.python.org/downloads/)
 * install [nodejs](https://nodejs.org/en/download/)
