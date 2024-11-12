@@ -3,20 +3,11 @@ import threading
 from asyncio import sleep
 from logging import LogRecord
 
-from state_management import configure_device
-from state_management.utils.interval import (
-    clear_all,
-    clear_intervals,
-    clear_timeouts,
-    set_interval,
-    set_timeout,
-)
-from state_management.utils.logger import set_log_event_function
 from textual import events, on
 from textual.app import App, ComposeResult
 from textual.containers import Center, Grid, Horizontal, Vertical
 from textual.widgets import Footer, Header, LoadingIndicator, RichLog, Static
-from view.textualUI.asset import (
+from asset import (
     CAT,
     DOWN_ARROW,
     LEFT_ARROW,
@@ -24,7 +15,17 @@ from view.textualUI.asset import (
     RIGHT_ARROW,
     UP_ARROW,
 )
-from view.textualUI.reactivebutton import ReactiveButton
+from utils.logger import (
+    set_log_event_function,
+)
+from component.reactivebutton import ReactiveButton
+from utils.interval import (
+    clear_all,
+    clear_intervals,
+    clear_timeouts,
+    set_interval,
+    set_timeout,
+)
 
 MUSCLE = "left_muscle"
 
@@ -39,54 +40,54 @@ class DirectionController:
     @staticmethod
     def left():
         logging.info("Left")
-        raw_motor_action.step_n(LATERAL_MOTOR, LEFT_DISTANCE)
+        # raw_motor_action.step_n(LATERAL_MOTOR, LEFT_DISTANCE)
 
     @staticmethod
     def bigLeft():
         logging.info("Left")
-        raw_motor_action.step_n(LATERAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
+        # raw_motor_action.step_n(LATERAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def right():
         logging.info("Right")
-        raw_motor_action.step_n(LATERAL_MOTOR, RIGHT_DISTANCE)
+        # raw_motor_action.step_n(LATERAL_MOTOR, RIGHT_DISTANCE)
 
     @staticmethod
     def bigRight():
         logging.info("Right")
-        raw_motor_action.step_n(LATERAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
+        # raw_motor_action.step_n(LATERAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def up():
         logging.info("Up")
-        raw_motor_action.step_n(MEDIAL_MOTOR, LEFT_DISTANCE)
+        # raw_motor_action.step_n(MEDIAL_MOTOR, LEFT_DISTANCE)
 
     @staticmethod
     def bigUp():
         logging.info("Up")
-        raw_motor_action.step_n(MEDIAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
+        # raw_motor_action.step_n(MEDIAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def down():
         logging.info("Down")
-        raw_motor_action.step_n(MEDIAL_MOTOR, RIGHT_DISTANCE)
+        # raw_motor_action.step_n(MEDIAL_MOTOR, RIGHT_DISTANCE)
 
     @staticmethod
     def bigDown():
         logging.info("Down")
-        raw_motor_action.step_n(MEDIAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
+        # raw_motor_action.step_n(MEDIAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def space():
         logging.info("Space")
-        muscle_actions.contract(MUSCLE, lambda _: True)
+        # muscle_actions.contract(MUSCLE, lambda _: True)
 
     @staticmethod
     def end_space():
         logging.info("End Space")
-        muscle_actions.relax(MUSCLE, lambda _: True)
-        raw_motor_action.step_n(MEDIAL_MOTOR, 1)
-        raw_motor_action.step_n(MEDIAL_MOTOR, -1)
+        # muscle_actions.relax(MUSCLE, lambda _: True)
+        # raw_motor_action.step_n(MEDIAL_MOTOR, 1)
+        # raw_motor_action.step_n(MEDIAL_MOTOR, -1)
 
 
 class Main_UI(App):
@@ -269,5 +270,4 @@ def main():
 
 
 if __name__ == "__main__":
-    configure_device("src/raspi/pinconfig.json")
     main()

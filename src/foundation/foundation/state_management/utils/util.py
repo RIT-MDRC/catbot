@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 
 from dotenv import dotenv_values
 from gpiozero import DigitalInputDevice, DigitalOutputDevice, PWMOutputDevice
@@ -10,7 +9,6 @@ from .deviceMock import (
     FakeDigitalOutputDevice,
     FakePWMOutputDevice,
 )
-from .interval import set_interval
 
 
 def is_dev() -> bool:
@@ -93,13 +91,3 @@ def get_pinconfig(filepath: str = "src/raspi/pinconfig.json") -> dict:
     """
     with open(filepath, "r") as file:
         return json.load(file)
-
-
-def on_test_pressure_reading(id):
-    if isinstance(id, DigitalInputDevice) or isinstance(id, FakeDigitalInputDevice):
-
-        def func():
-            id.toggle()
-
-        interval = set_interval(func, 5)
-        return interval
