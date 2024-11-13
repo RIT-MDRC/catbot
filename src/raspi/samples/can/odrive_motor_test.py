@@ -70,18 +70,23 @@ def main():
         render_row(1, f"Velocity: {velocity}")
         render_left_status(left_input)
         render_right_status(right_input)
-        #render_row(4, f"Speed Limit: {speed if use_speed_limit else 'Uncapped'}")
+        render_row(4, f"Speed Limit: {speed if use_speed_limit else 'Uncapped'}")
         
         if change or (position is not None and abs(position - resting_pos) > 0.1):
             pos_limits = odrive_action.get_position_limits(motor)
+
+            if use_speed_limit:
+                if odrive_action.get_input_mode(motor) == InputMode.PASSTHROUGH:
+                    odrive_action.set_controller_mode(motor, ControlMode.POSITION_CONTROL, InputMode.TRAP_TRAJ)
+                odrive_action.set_trajectory_velocity(velocity)
+            else:
+                if odrive_action.get_input_mode(motor) == InputMode.TRAP_TRAJ:
+                    odrive_action.set_controller_mode(motor, ControlMode.POSITION_CONTROL, InputMode.PASSTHROUGH)
+
             if left_input:
                 odrive_action.set_target_position(motor, pos_limits[0])
-                if use_speed_limit:
-                    odrive_action.set_target_velocity(motor, -speed)
             elif right_input:
                 odrive_action.set_target_position(motor, pos_limits[1])
-                if use_speed_limit:
-                    odrive_action.set_target_velocity(motor, speed)
             else:
                 odrive_action.stop(motor)
 

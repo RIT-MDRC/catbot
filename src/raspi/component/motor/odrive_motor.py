@@ -111,7 +111,7 @@ def set_target_position(motor: ODriveMotor, position: float, velocity_FF: float 
     """Set the target position for this motor
     Only use this function if Control Mode is set to POSITION_CONTROL"""
     if motor.control_mode != ControlMode.POSITION_CONTROL:
-        logging.error(f"Attempting to set position on motor {motor.axisID} when not set to POSITION_CONTROL.")
+        logging.error(f"Can not set position on motor {motor.axisID} when not set to POSITION_CONTROL.")
         return False
     if motor.position_min != None and position < motor.position_min:
         logging.warning(f"Attempting to set position on motor {motor.axisID} past lower bounds.")
@@ -122,11 +122,20 @@ def set_target_position(motor: ODriveMotor, position: float, velocity_FF: float 
     return send_message(motor, "Set_Input_Pos", {'Input_Pos': position, 'Vel_FF': velocity_FF, 'Torque_FF': torque_FF})
 
 @device_action(ctx)
+def set_trajectory_velocity(motor: ODriveMotor, velocity: float) -> bool:
+    return send_message(motor, "Set_Traj_Vel_Limit", {'Traj_Vel_Limit': velocity})
+
+@device_action(ctx)
+def set_trajectory_accel(motor: ODriveMotor, accel: float, decel: float = None) -> bool:
+    return send_message(motor, "Set_Traj_Accel_Limits", {'Traj_Accel_Limit': accel, 'Traj_Decel_Limit': decel if decel else accel})
+
+@device_action(ctx)
 def set_target_velocity(motor: ODriveMotor, velocity: float, torque_FF: float = 0.0) -> bool:
-    """Set the target velocity for this motor
-    Only use this function if Control Mode is set to VELOCITY_CONTROL"""
-    if motor.control_mode != ControlMode.VELOCITY_CONTROL:
-        logging.error(f"Attempting to set velocity on motor {motor.axisID} when not set to VELOCITY_CONTROL.")
+    """Set the target velocity for this motor"""
+    if motor.control_mode == ControlMode.POSITION_CONTROL and motor.input_mode == InputMode.TRAP_TRAJ:
+        return set_trajectory_velocity(motor, velocity)
+    elif motor.control_mode != ControlMode.VELOCITY_CONTROL:
+        logging.error(f"Can not set input velocity on motor {motor.axisID} when not set to VELOCITY_CONTROL.")
         return False
     return send_message(motor, "Set_Input_Vel", {'Input_Vel': velocity, 'Input_Torque_FF': torque_FF})
 
@@ -151,11 +160,12 @@ def get_position_limits(motor: ODriveMotor) -> list[float]:
 def get_current_velocity(motor: ODriveMotor) -> float:
     return motor.current_velocity
 
-@device_action(ctx)
-def set_limits(motor: ODriveMotor, velocity_limit: float, current_limit: float) -> bool:
-    """Set the velocity and current limits for this motor
-    Consider changing the motor's config instead of using this function"""
-    return send_message(motor, "Set_Limits", {'Velocity_Limit': velocity_limit, 'Current_Limit': current_limit})
+## These are safety limits set by the hardware team. DO NOT CHANGE THESE LIMITS.
+# @device_action(ctx)
+# def set_limits(motor: ODriveMotor, velocity_limit: float, current_limit: float) -> bool:
+#     """Set the velocity and current limits for this motor
+#     Consider changing the motor's config instead of using this function"""
+#     return send_message(motor, "Set_Limits", {'Velocity_Limit': velocity_limit, 'Current_Limit': current_limit})
 
 @device_action(ctx)
 def request_set_state(motor: ODriveMotor, state: MotorState) -> bool:
