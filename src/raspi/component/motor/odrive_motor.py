@@ -20,8 +20,14 @@ ODRIVE_CAN_DB = cantools.database.load_file("src/raspi/component/motor/odrive-ca
 @device
 @dataclass
 class ODriveMotor:
-    axisID: int
     bus: can_bus.CanBus = identifier(can_bus.ctx)
+    axisID: int
+
+    control_mode: ControlMode
+    input_mode: InputMode
+    position_min: float = None
+    position_max: float = None
+
     current_state : MotorState = MotorState.UNDEFINED
     current_position: float = None
     current_velocity: float = None
@@ -92,6 +98,8 @@ def get_error_num(error):
 
 #endregion
 
+#region Device Actions
+
 ctx = create_generic_context("odrive_motor", [ODriveMotor])
 
 @device_parser(ctx)
@@ -102,17 +110,41 @@ def parse_odrive(data: dict) -> ODriveMotor:
 def set_target_position(motor: ODriveMotor, position: float, velocity_FF: float = 0.0, torque_FF: float = 0.0) -> bool:
     """Set the target position for this motor
     Only use this function if Control Mode is set to POSITION_CONTROL"""
+    if motor.control_mode != ControlMode.POSITION_CONTROL:
+        logging.error(f"Attempting to set position on motor {motor.axisID} when not set to POSITION_CONTROL.")
+        return False
+    if motor.position_min != None and position < motor.position_min:
+        logging.warning(f"Attempting to set position on motor {motor.axisID} past lower bounds.")
+        position = motor.position_min
+    elif motor.position_max != None and position > motor.position_max:
+        logging.warning(f"Attempting to set position on motor {motor.axisID} past upper bounds.")
+        position = motor.position_max
     return send_message(motor, "Set_Input_Pos", {'Input_Pos': position, 'Vel_FF': velocity_FF, 'Torque_FF': torque_FF})
 
 @device_action(ctx)
 def set_target_velocity(motor: ODriveMotor, velocity: float, torque_FF: float = 0.0) -> bool:
     """Set the target velocity for this motor
     Only use this function if Control Mode is set to VELOCITY_CONTROL"""
+    if motor.control_mode != ControlMode.VELOCITY_CONTROL:
+        logging.error(f"Attempting to set position on motor {motor.axisID} when not set to VELOCITY_CONTROL.")
+        return False
     return send_message(motor, "Set_Input_Vel", {'Input_Vel': velocity, 'Input_Torque_FF': torque_FF})
+
+@device_action(ctx)
+def stop(motor: ODriveMotor):
+    match motor.control_mode:
+        case ControlMode.POSITION_CONTROL:
+            set_target_position(motor, motor.current_position)
+        case ControlMode.VELOCITY_CONTROL:
+            set_target_velocity(motor, 0)
 
 @device_action(ctx)
 def get_current_position(motor: ODriveMotor) -> float:
     return motor.current_position
+
+@device_action(ctx)
+def get_position_limits(motor: ODriveMotor) -> list[float]:
+    return [motor.position_min, motor.position_max]
 
 @device_action(ctx)
 def get_current_velocity(motor: ODriveMotor) -> float:
@@ -136,8 +168,20 @@ def get_state(motor: ODriveMotor) -> MotorState:
     return motor.current_state
 
 @device_action(ctx)
-def set_controller_mode(motor: ODriveMotor, control_mode: ControlMode, input_mode: InputMode) -> bool:
-    return send_message(motor, "Set_Controller_Mode", {'Control_Mode': control_mode, 'Input_Mode': input_mode})
+def set_controller_mode(motor: ODriveMotor, new_control_mode: ControlMode = None, new_input_mode: InputMode = None) -> bool:
+    if new_control_mode != ControlMode.POSITION_CONTROL and (motor.position_min is not None or motor.position_max is not None):
+        logging.warning(f"Motor {motor.axisID} has position limits, but is being set to non-position control. Position limits can not be enforced under non-position control.")
+    return send_message(motor, "Set_Controller_Mode", 
+                        {'Control_Mode': new_control_mode if new_control_mode else motor.control_mode,
+                         'Input_Mode': new_input_mode if new_input_mode else motor.input_mode})
+
+@device_action(ctx)
+def get_control_mode(motor: ODriveMotor) -> ControlMode:
+    return motor.control_mode
+
+@device_action(ctx)
+def get_input_mode(motor: ODriveMotor) -> InputMode:
+    return motor.input_mode
 
 @device_action(ctx)
 def send_message(motor: ODriveMotor, msg_name: str, data: dict) -> bool:
@@ -145,3 +189,5 @@ def send_message(motor: ODriveMotor, msg_name: str, data: dict) -> bool:
     msg_id = msg.frame_id | motor.axisID << 5
     data = msg.encode(data)
     return can_bus.send_message(motor.bus, msg_id, data)
+
+#endregion
