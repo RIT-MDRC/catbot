@@ -7,5 +7,5 @@ python-dotenv
 textual
 adafruit_circuitpython_mcp230xx
 pydantic
-numpy
+numpy==2.1.3
 rclpy
