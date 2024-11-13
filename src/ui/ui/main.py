@@ -1,3 +1,5 @@
+#!/usr/bin/env ../../../.venv/bin/python
+
 from dataclasses import dataclass, field
 import logging
 import threading
@@ -322,13 +324,14 @@ class Main_UI(App):
                 pass
 
 
-def main():
+def main(args=None):
     global pub_node
+    rclpy.init(args=args)
 
     pub_node = PublishInput()
+    rosThread = threading.Thread(target=lambda: rclpy.spin(pub_node))
 
     try:
-        rosThread = threading.Thread(target=lambda: rclpy.spin(pub_node))
         rosThread.start()
         Main_UI().run()
     except Exception as e:

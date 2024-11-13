@@ -8,3 +8,4 @@ textual
 adafruit_circuitpython_mcp230xx
 pydantic
 numpy
+rclpy

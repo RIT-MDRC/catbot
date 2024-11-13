@@ -1,3 +1,5 @@
+#!/usr/bin/env ../../../.venv/bin/python
+
 from dataclasses import dataclass, field
 import os
 import rclpy

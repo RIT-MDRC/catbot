@@ -7,3 +7,8 @@
 *.pyc
 .log/*.log
 __pycache__/
+# Colcon build artifacts
+build/
+install/
+log/
+test_result/
