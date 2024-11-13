@@ -20,11 +20,11 @@ ODRIVE_CAN_DB = cantools.database.load_file("src/raspi/component/motor/odrive-ca
 @device
 @dataclass
 class ODriveMotor:
-    bus: can_bus.CanBus = identifier(can_bus.ctx)
     axisID: int
-
     control_mode: ControlMode
     input_mode: InputMode
+    #reminder: fields with default values must come after fields without defaults
+    bus: can_bus.CanBus = identifier(can_bus.ctx)
     position_min: float = None
     position_max: float = None
 
@@ -126,7 +126,7 @@ def set_target_velocity(motor: ODriveMotor, velocity: float, torque_FF: float = 
     """Set the target velocity for this motor
     Only use this function if Control Mode is set to VELOCITY_CONTROL"""
     if motor.control_mode != ControlMode.VELOCITY_CONTROL:
-        logging.error(f"Attempting to set position on motor {motor.axisID} when not set to VELOCITY_CONTROL.")
+        logging.error(f"Attempting to set velocity on motor {motor.axisID} when not set to VELOCITY_CONTROL.")
         return False
     return send_message(motor, "Set_Input_Vel", {'Input_Vel': velocity, 'Input_Torque_FF': torque_FF})
 
@@ -134,7 +134,8 @@ def set_target_velocity(motor: ODriveMotor, velocity: float, torque_FF: float = 
 def stop(motor: ODriveMotor):
     match motor.control_mode:
         case ControlMode.POSITION_CONTROL:
-            set_target_position(motor, motor.current_position)
+            if motor.current_position is not None:
+                set_target_position(motor, motor.current_position)
         case ControlMode.VELOCITY_CONTROL:
             set_target_velocity(motor, 0)
 

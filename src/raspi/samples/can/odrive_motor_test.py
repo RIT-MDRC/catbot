@@ -11,9 +11,6 @@ configure_device("src/raspi/pinconfig.json")
 can_bus = "can_bus_1"
 motor = "odrive_1"
 
-odrive_action.set_controller_mode(motor, ControlMode.VELOCITY_CONTROL, InputMode.VEL_RAMP)
-odrive_action.request_set_state(motor, MotorState.CLOSED_LOOP_CONTROL)
-
 
 def hydrate_screen():
     """Post setup for the screen (after pygame.init() and global variable are set)"""
@@ -36,41 +33,57 @@ def main():
     right_input = False
     speed = 15
     use_speed_limit = True
+    resting_pos = 0
     while not exit:
+        change = False
         for event in get_keys():
             if is_event_type(event, "down"):
                 if event.key in [pygame.K_a, pygame.K_LEFT]:
                     left_input = True
+                    change = True
                 elif event.key in [pygame.K_d, pygame.K_RIGHT]:
                     right_input = True
+                    change = True
                 elif event.key in [pygame.K_w, pygame.K_UP]:
                     speed += 1
+                    change = True
                 elif event.key in [pygame.K_s, pygame.K_DOWN]:
                     speed -= 1
+                    change = True
                 elif event.key in [pygame.K_SPACE]:
                     use_speed_limit = not use_speed_limit
+                    change = True
                 elif event.key in [pygame.K_q]:
                     exit = True
             elif is_event_type(event, "up"):
-                if is_key_pressed(event, ["a", "left"]):
-                    if odrive_action.set_target_velocity(motor, 0):
-                        render_left_status(False)
-                elif is_key_pressed(event, ["d", "right"]):
-                    if odrive_action.set_target_velocity(motor, 0):
-                        render_right_status(False)
+                if event.key in [pygame.K_a, pygame.K_LEFT]:
+                    left_input = False
+                    change = True
+                elif event.key in [pygame.K_d, pygame.K_RIGHT]:
+                    right_input = False
+                    change = True
         
-        render_row(0, f"Position: {odrive_action.get_current_position(motor)}")
-        render_row(1, f"Velocity: {odrive_action.get_current_velocity(motor)}")
+        position = odrive_action.get_current_position(motor)
+        velocity = odrive_action.get_current_velocity(motor)
+        
+        render_row(0, f"Position: {position}")
+        render_row(1, f"Velocity: {velocity}")
         render_left_status(left_input)
         render_right_status(right_input)
-        render_row(4, f"Speed Limit: {speed if use_speed_limit else "Uncapped"}")
-        pos_limits = odrive_action.get_position_limits(motor)
-        if left_input:
-            odrive_action.set_target_position(motor, pos_limits[0], -speed if use_speed_limit else 0)
-        elif right_input:
-            odrive_action.set_target_position(motor, pos_limits[1], speed if use_speed_limit else 0)
-        else:
-            odrive_action.stop(motor)
+        #render_row(4, f"Speed Limit: {speed if use_speed_limit else 'Uncapped'}")
+        
+        if change or (position is not None and abs(position - resting_pos) > 0.1):
+            pos_limits = odrive_action.get_position_limits(motor)
+            if left_input:
+                odrive_action.set_target_position(motor, pos_limits[0])
+                if use_speed_limit:
+                    odrive_action.set_target_velocity(motor, -speed)
+            elif right_input:
+                odrive_action.set_target_position(motor, pos_limits[1])
+                if use_speed_limit:
+                    odrive_action.set_target_velocity(motor, speed)
+            else:
+                odrive_action.stop(motor)
 
         update_screen()
         clock_tick(60)
