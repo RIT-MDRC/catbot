@@ -2,8 +2,7 @@ from dataclasses import dataclass, field
 import os
 import rclpy
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
-from rclpy.node import Node
-from rclpy.node import Parameter
+from rclpy.node import Node, Parameter
 from state_management import configure_device
 from component.latch import latch_actions
 from component.motor import motor_actions
@@ -17,7 +16,7 @@ latch_actions.USE = True
 class DeviceActionSubscriber:
     callback: callable
     topic: str = field(default=None)
-    param_type: object = field(default=Parameter.Type.NOT_SET)
+    paramType: object = field(default=Parameter.Type.NOT_SET)
 
     def __post_init__(self):
         assert callable(self.callback), "Callback must be a callable"
@@ -30,7 +29,7 @@ SUBSCRIBER_DEVICE_ACTION_CALLBACKS = [
     {
         "topic": "/motor/step_n",
         "callback": motor_actions.step_n,
-        "param_type": Parameter.Type.INTEGER,
+        "paramType": Parameter.Type.INTEGER,
     },
     {"topic": "/muscle/contract", "callback": muscle_actions.contract},
     {"topic": "/muscle/relax", "callback": muscle_actions.relax},
@@ -38,8 +37,9 @@ SUBSCRIBER_DEVICE_ACTION_CALLBACKS = [
 
 
 class DeviceActionSubscriberNode(Node):
-    def __init__(self, node_name, subscribers_info):
-        super().__init__(node_name)
+    def __init__(self, nodeName, subscribers_info):
+        configure_device(os.path.join(f"{os.path.dirname(__file__)}/pinconfig.json"))
+        super().__init__(nodeName)
 
         # Create a Mutex CallbackGroup
         self.callback_group = MutuallyExclusiveCallbackGroup()
@@ -72,10 +72,11 @@ class DeviceActionSubscriberNode(Node):
 
 
 def main(args=None):
-    configure_device(os.path.join("src", "raspi", "pinconfig.json"))
     rclpy.init(args=args)
 
-    node = DeviceActionSubscriberNode("main_node", SUBSCRIBER_DEVICE_ACTION_CALLBACKS)
+    node = DeviceActionSubscriberNode(
+        "foundation_node", SUBSCRIBER_DEVICE_ACTION_CALLBACKS
+    )
 
     try:
         rclpy.spin(node)

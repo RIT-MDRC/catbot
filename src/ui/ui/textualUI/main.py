@@ -1,8 +1,9 @@
+from dataclasses import dataclass, field
 import logging
 import threading
 from asyncio import sleep
 from logging import LogRecord
-
+from rclpy import Node, Parameter
 from textual import events, on
 from textual.app import App, ComposeResult
 from textual.containers import Center, Grid, Horizontal, Vertical
@@ -15,6 +16,7 @@ from asset import (
     RIGHT_ARROW,
     UP_ARROW,
 )
+import rclpy
 from utils.logger import (
     set_log_event_function,
 )
@@ -28,66 +30,125 @@ from utils.interval import (
 )
 
 MUSCLE = "left_muscle"
-
 LATERAL_MOTOR = "motor_1"
 MEDIAL_MOTOR = "motor_2"
+
+MUSCLE_LIST = [MUSCLE]
+MOTOR_LIST = [LATERAL_MOTOR, MEDIAL_MOTOR]
+
 LEFT_DISTANCE = 2
 RIGHT_DISTANCE = -2
 MULTIPLIER = 8
+
+FOUNDATION_NODE_NAME = "foundation_node"
+
+EVENT_TOPICS = [
+    {
+        "path": "/motor/step_n",
+        "devices": MOTOR_LIST,
+        "paramType": Parameter.Type.INTEGER,
+    },
+    {"path": "/muscle/contract", "devices": MUSCLE_LIST},
+    {"path": "/muscle/relax", "devices": MUSCLE_LIST},
+]
+
+pub_node: "PublishInput" = None
+
+
+@dataclass
+class DevicePublisherTopic:
+    topic: str
+    paramType: object = field(default=Parameter.Type.NOT_SET)
+
+
+class PublishInput(Node):
+    subscriberNodeName: str
+    publishersObjs = dict()
+
+    def __init__(
+        self,
+        subscriberNodeName=FOUNDATION_NODE_NAME,
+        node_name="ui_node",
+        topics=EVENT_TOPICS,
+    ):
+        super().__init__(node_name)
+        self.subscriberNodeName = subscriberNodeName
+        publishers = [DevicePublisherTopic(**topic) for topic in topics]
+
+        for publisher in publishers:
+            for device in publisher.devices:
+                self.publishersObjs[
+                    f"{subscriberNodeName}/{publisher.topic}/{device}"
+                ] = self.create_publisher(
+                    publisher.paramType,
+                    publisher.topic,
+                    10,
+                )
+
+    def publish(self, topic: str, device: str, msg: object):
+        self.publishersObjs[f"{self.subscriberNodeName}/{topic}/{device}"].publish(msg)
 
 
 class DirectionController:
     @staticmethod
     def left():
         logging.info("Left")
+        pub_node.publish("/motor/step_n", LATERAL_MOTOR, LEFT_DISTANCE)
         # raw_motor_action.step_n(LATERAL_MOTOR, LEFT_DISTANCE)
 
     @staticmethod
     def bigLeft():
         logging.info("Left")
+        pub_node.publish("/motor/step_n", LATERAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
         # raw_motor_action.step_n(LATERAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def right():
         logging.info("Right")
+        pub_node.publish("/motor/step_n", LATERAL_MOTOR, RIGHT_DISTANCE)
         # raw_motor_action.step_n(LATERAL_MOTOR, RIGHT_DISTANCE)
 
     @staticmethod
     def bigRight():
         logging.info("Right")
+        pub_node.publish("/motor/step_n", LATERAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
         # raw_motor_action.step_n(LATERAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def up():
         logging.info("Up")
+        pub_node.publish("/motor/step_n", MEDIAL_MOTOR, LEFT_DISTANCE)
         # raw_motor_action.step_n(MEDIAL_MOTOR, LEFT_DISTANCE)
 
     @staticmethod
     def bigUp():
         logging.info("Up")
+        pub_node.publish("/motor/step_n", MEDIAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
         # raw_motor_action.step_n(MEDIAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def down():
         logging.info("Down")
+        pub_node.publish("/motor/step_n", MEDIAL_MOTOR, RIGHT_DISTANCE)
         # raw_motor_action.step_n(MEDIAL_MOTOR, RIGHT_DISTANCE)
 
     @staticmethod
     def bigDown():
         logging.info("Down")
+        pub_node.publish("/motor/step_n", MEDIAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
         # raw_motor_action.step_n(MEDIAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def space():
         logging.info("Space")
+        pub_node.publish("/muscle/contract", MUSCLE)
         # muscle_actions.contract(MUSCLE, lambda _: True)
 
     @staticmethod
     def end_space():
         logging.info("End Space")
+        pub_node.publish("/muscle/relax", MUSCLE)
         # muscle_actions.relax(MUSCLE, lambda _: True)
-        # raw_motor_action.step_n(MEDIAL_MOTOR, 1)
-        # raw_motor_action.step_n(MEDIAL_MOTOR, -1)
 
 
 class Main_UI(App):
@@ -262,7 +323,13 @@ class Main_UI(App):
 
 
 def main():
+    global pub_node
+
+    pub_node = PublishInput()
+
     try:
+        rosThread = threading.Thread(target=lambda: rclpy.spin(pub_node))
+        rosThread.start()
         Main_UI().run()
     except Exception as e:
         clear_all()
