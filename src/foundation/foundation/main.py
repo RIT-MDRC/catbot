@@ -3,10 +3,12 @@ import os
 import rclpy
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
+from rclpy.node import Parameter
 from state_management import configure_device
 from component.latch import latch_actions
 from component.motor import motor_actions
 from component.muscle import muscle_actions
+
 
 latch_actions.USE = True
 
@@ -15,7 +17,7 @@ latch_actions.USE = True
 class DeviceActionSubscriber:
     callback: callable
     topic: str = field(default=None)
-    param_type: object = field(default=Float32MultiArray)
+    param_type: object = field(default=Parameter.Type.NOT_SET)
 
     def __post_init__(self):
         assert callable(self.callback), "Callback must be a callable"
@@ -25,7 +27,11 @@ class DeviceActionSubscriber:
 
 # Subscribers
 SUBSCRIBER_DEVICE_ACTION_CALLBACKS = [
-    {"topic": "/motor/step_n", "callback": motor_actions.step_n},
+    {
+        "topic": "/motor/step_n",
+        "callback": motor_actions.step_n,
+        "param_type": Parameter.Type.INTEGER,
+    },
     {"topic": "/muscle/contract", "callback": muscle_actions.contract},
     {"topic": "/muscle/relax", "callback": muscle_actions.relax},
 ]
@@ -45,6 +51,7 @@ class DeviceActionSubscriberNode(Node):
             topic = subscriber.topic
             callback = subscriber.callback
             context = getattr(callback, "_ctx")
+            paramType = subscriber.param_type
             for device_name, device in context.store.items():
 
                 def dev_callback(msg):
@@ -56,7 +63,7 @@ class DeviceActionSubscriberNode(Node):
                         self.get_logger().error(f"Error: {e}")
 
                 self.create_subscription(
-                    Float32MultiArray,
+                    Parameter.Type.NOT_SET if paramType is None else paramType,
                     f"{topic}/{device_name}",  # Topic path
                     dev_callback,  # Callback function
                     10,  # QoS profile depth

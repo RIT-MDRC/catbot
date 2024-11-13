@@ -13,9 +13,13 @@ WORKDIR /workspace
 # Create a virtual environment
 RUN python3.12 -m venv /workspace/main-catbot/.venv
 
-# Activate the virtual environment and install any initial Python packages
-RUN . /workspace/main-catbot/.venv/bin/activate && pip install --upgrade pip
+# Use a shell command to find the only folder in the workspace and create a virtual environment
+RUN PROJECT_FOLDER=$(ls -d /workspace/*/ | head -n 1) && \
+    python3.12 -m venv "$PROJECT_FOLDER/.venv" && \
+    . "$PROJECT_FOLDER/.venv/bin/activate" && pip install --upgrade pip
 
-# Source the ROS 2 setup script by default
-RUN echo "source /workspace/main-catbot/.venv/bin/activate" >> /root/.bashrc
+# Source the virtual environment and ROS 2 setup script by default
+RUN PROJECT_FOLDER=$(ls -d /workspace/*/ | head -n 1) && \
+    echo "source $PROJECT_FOLDER/.venv/bin/activate" >> /root/.bashrc
+    
 RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc

@@ -15,7 +15,6 @@
 			]
 		}
 	},
-	"postCreateCommand": ". /workspaces/main-catbot/.venv/bin/activate && pip install -r /workspaces/main-catbot/requirements.txt || true",
 	"remoteUser": "root",
 	"remoteEnv": {
 		"MY_ENV_VAR": "my_value"
