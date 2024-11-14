@@ -1,9 +1,10 @@
 {
-	"name": "ROS 2 Dev Container",
+	"name": "Catbot",
 	"build": {
-		"dockerfile": "Dockerfile",
-		"context": "."
+		"dockerfile": "Dockerfile"
 	},
+	"workspaceFolder": "/workspace",
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
 	"customizations": {
 		"vscode": {
 			"settings": {
@@ -20,16 +21,20 @@
 				"ms-vscode-remote.remote-containers",
 				"donjayamanne.githistory",
 				"donjayamanne.python-environment-manager",
-				"njqdev.vscode-python-typehint"
+				"njqdev.vscode-python-typehint",
+				"ms-vscode.cpptools",
+				"ms-vscode.cpptools-themes",
+				"twxs.cmake",
+				"donjayamanne.python-extension-pack",
+				"eamodio.gitlens",
+				"ms-iot.vscode-ros"
 			]
 		}
 	},
-	"remoteUser": "root",
-	"remoteEnv": {
-		"MY_ENV_VAR": "my_value"
+	"containerEnv": {
+		"ROS_LOCALHOST_ONLY": "1",
+		"ROS_DOMAIN_ID": "42",
+		"ENV": "dev"
 	},
-	"workspaceFolder": "/workspace",
-	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
-	"postCreateCommand": "python3 -m venv .venv",
-	"postAttachCommand": ". .venv/bin/activate"
+	"postCreateCommand": "python3 -m venv .venv && sudo rosdep update && sudo rosdep install --from-paths src --ignore-src -y"
 }
