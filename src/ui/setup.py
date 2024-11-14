@@ -11,7 +11,7 @@ setup(
         ("share/" + package_name, ["package.xml"]),
         ("lib/python3.12/site-packages/ui", ["ui/index.tcss"]),
     ],
-    install_requires=["setuptools"],
+    install_requires=["setuptools", "dotenv"],
     zip_safe=True,
     maintainer="root",
     maintainer_email="hiroto125takeuchi@gmail.com",
@@ -19,6 +19,6 @@ setup(
     license="TODO: License declaration",
     # tests_require=["pytest"],
     entry_points={
-        "console_scripts": ["ui = ui.main:main"],
+        "console_scripts": ["main = ui.main:main"],
     },
 )

@@ -8,6 +8,7 @@
 		"ms-vscode-remote.remote-containers",
 		"donjayamanne.githistory",
 		"donjayamanne.python-environment-manager",
-		"njqdev.vscode-python-typehint"
+		"njqdev.vscode-python-typehint",
+		"emeraldwalk.runonsave"
 	]
 }

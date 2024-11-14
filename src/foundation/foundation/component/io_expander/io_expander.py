@@ -7,7 +7,7 @@ from . import interrupt_pin_action
 from adafruit_mcp230xx.mcp23017 import MCP23017, DigitalInOut
 from digitalio import Direction, Pull
 from gpiozero import DigitalInputDevice
-from state_management import (
+from ...state_management import (
     create_context,
     device,
     device_parser,

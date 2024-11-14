@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 
 from gpiozero import DigitalInputDevice, DigitalOutputDevice
-from state_management import (
+from ...state_management import (
     create_generic_context,
     device,
     device_action,

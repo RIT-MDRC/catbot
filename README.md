@@ -18,7 +18,8 @@ Quadruped Hybrid Pneumatic-Electric Robot. Utilizes McKibben Muscles for bio-inp
 * `source install/local_setup.bash`
 
 ### Run script
-
+Build the packages:
+* `colcon build`
 To run the UI package:
 * `ros2 run ui ui`
 

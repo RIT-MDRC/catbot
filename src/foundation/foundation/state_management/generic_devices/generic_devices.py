@@ -1,15 +1,13 @@
 import logging
 
 from gpiozero import DigitalInputDevice, DigitalOutputDevice, PWMOutputDevice
-from state_management import create_generic_context, device_parser
-from state_management.utils import (
+from .. import create_generic_context, device_parser
+from ..utils import (
     FakeDigitalInputDevice,
     FakeDigitalOutputDevice,
     FakePWMOutputDevice,
     is_dev,
 )
-
-from ..utils.deviceMock import FakeSMBus
 
 __all__ = [
     "input_device_ctx",

@@ -1,14 +1,14 @@
-#!/usr/bin/env ../../../.venv/bin/python
+#!/usr/bin/env /workspace/.venv/bin/python
 
 from dataclasses import dataclass, field
 import os
 import rclpy
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node, Parameter
-from state_management import configure_device
-from component.latch import latch_actions
-from component.motor import motor_actions
-from component.muscle import muscle_actions
+from .state_management import configure_device
+from .component.latch import latch_actions
+from .component.motor import motor_actions
+from .component.muscle import muscle_actions
 
 
 latch_actions.USE = True

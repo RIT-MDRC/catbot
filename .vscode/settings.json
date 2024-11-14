@@ -14,5 +14,16 @@
     "/workspaces/main-catbot/install/ui/lib/python3.12/site-packages",
     "/workspaces/main-catbot/install/foundation/lib/python3.12/site-packages",
     "/opt/ros/jazzy/lib/python3.12/site-packages"
-  ]
+  ],
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "match": "./src/*",
+        "isAsync": false,
+        "cmd": "colcon build",
+        "messageAfter": "Colcon build complete!",
+        "autoShowOutputPanel": "error"
+      }
+    ]
+  }
 }

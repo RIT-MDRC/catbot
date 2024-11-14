@@ -1,9 +1,9 @@
 import logging
 from dataclasses import dataclass
 
-from component.smbus import smbus_actions
+from ...component.smbus import smbus_actions
 from smbus2 import i2c_msg
-from state_management import (
+from ...state_management import (
     create_context,
     device,
     device_action,

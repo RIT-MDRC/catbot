@@ -9,8 +9,9 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
+        ("lib/python3.12/site-packages/foundation", ["foundation/pinconfig.json"]),
     ],
-    install_requires=["setuptools"],
+    install_requires=["setuptools", "dotenv"],
     zip_safe=True,
     maintainer="root",
     maintainer_email="hiroto125takeuchi@gmail.com",
@@ -18,8 +19,6 @@ setup(
     license="My license",
     # tests_require=["pytest"],
     entry_points={
-        "console_scripts": [
-            "foundation = foundation:main",
-        ],
+        "console_scripts": ["main = foundation.main:main"],
     },
 )
