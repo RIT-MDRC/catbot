@@ -51,4 +51,5 @@ If all above fails:
 
 ## Contributing
 ### Before contributing
-* Make sure to read the documentation in the [wiki](https://github.com/RIT-MDRC/Catbot/wiki)
+Make sure to read the documentation in the [wiki](https://github.com/RIT-MDRC/Catbot/wiki).
+Questions with the documentation are welcomed in the [issues tab](https://github.com/RIT-MDRC/Catbot/issues).
