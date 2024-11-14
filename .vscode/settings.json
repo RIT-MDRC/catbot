@@ -20,7 +20,7 @@
       {
         "match": "./src/*",
         "isAsync": false,
-        "cmd": "colcon build",
+        "cmd": ". .venv/bin/activate && colcon build",
         "messageAfter": "Colcon build complete!",
         "autoShowOutputPanel": "error"
       }

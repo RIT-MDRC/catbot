@@ -48,12 +48,12 @@ FOUNDATION_NODE_NAME = "foundation_node"
 
 EVENT_TOPICS = [
     {
-        "path": "/motor/step_n",
+        "path": "motor/step_n",
         "devices": MOTOR_LIST,
         "paramType": Int64,
     },
-    {"path": "/muscle/contract", "devices": MUSCLE_LIST},
-    {"path": "/muscle/relax", "devices": MUSCLE_LIST},
+    {"path": "muscle/contract", "devices": MUSCLE_LIST},
+    {"path": "muscle/relax", "devices": MUSCLE_LIST},
 ]
 
 pub_node: "PublishInput" = None
@@ -68,31 +68,27 @@ class DevicePublisherTopic:
 
 
 class PublishInput(Node):
-    subscriberNodeName: str
     publishersObjs = dict()
 
     def __init__(
         self,
-        subscriberNodeName=FOUNDATION_NODE_NAME,
         node_name="ui_node",
         topics=EVENT_TOPICS,
     ):
         super().__init__(node_name)
-        self.subscriberNodeName = subscriberNodeName
         publishers = [DevicePublisherTopic(**topic) for topic in topics]
 
         for publisher in publishers:
             for device in publisher.devices:
-                self.publishersObjs[
-                    f"{subscriberNodeName}/{publisher.path}/{device}"
-                ] = self.create_publisher(
+                topic_path = f"{publisher.path}/{device}"
+                self.publishersObjs[topic_path] = self.create_publisher(
                     publisher.paramType,
-                    publisher.path,
+                    topic_path,
                     10,
                 )
 
     def publish(self, topic: str, device: str, msg: object = Empty()):
-        self.publishersObjs[f"{self.subscriberNodeName}/{topic}/{device}"].publish(msg)
+        self.publishersObjs[f"{topic}/{device}"].publish(msg)
 
 
 def makeInt64(data: int) -> Int64:
@@ -105,69 +101,69 @@ class DirectionController:
     @staticmethod
     def left():
         logging.info("Left")
-        pub_node.publish("/motor/step_n", LATERAL_MOTOR, makeInt64(LEFT_DISTANCE))
+        pub_node.publish("motor/step_n", LATERAL_MOTOR, makeInt64(LEFT_DISTANCE))
         # raw_motor_action.step_n(LATERAL_MOTOR, LEFT_DISTANCE)
 
     @staticmethod
     def bigLeft():
         logging.info("Left")
         pub_node.publish(
-            "/motor/step_n", LATERAL_MOTOR, makeInt64(LEFT_DISTANCE * MULTIPLIER)
+            "motor/step_n", LATERAL_MOTOR, makeInt64(LEFT_DISTANCE * MULTIPLIER)
         )
         # raw_motor_action.step_n(LATERAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def right():
         logging.info("Right")
-        pub_node.publish("/motor/step_n", LATERAL_MOTOR, makeInt64(RIGHT_DISTANCE))
+        pub_node.publish("motor/step_n", LATERAL_MOTOR, makeInt64(RIGHT_DISTANCE))
         # raw_motor_action.step_n(LATERAL_MOTOR, RIGHT_DISTANCE)
 
     @staticmethod
     def bigRight():
         logging.info("Right")
         pub_node.publish(
-            "/motor/step_n", LATERAL_MOTOR, makeInt64(RIGHT_DISTANCE * MULTIPLIER)
+            "motor/step_n", LATERAL_MOTOR, makeInt64(RIGHT_DISTANCE * MULTIPLIER)
         )
         # raw_motor_action.step_n(LATERAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def up():
         logging.info("Up")
-        pub_node.publish("/motor/step_n", MEDIAL_MOTOR, makeInt64(LEFT_DISTANCE))
+        pub_node.publish("motor/step_n", MEDIAL_MOTOR, makeInt64(LEFT_DISTANCE))
         # raw_motor_action.step_n(MEDIAL_MOTOR, LEFT_DISTANCE)
 
     @staticmethod
     def bigUp():
         logging.info("Up")
         pub_node.publish(
-            "/motor/step_n", MEDIAL_MOTOR, makeInt64(LEFT_DISTANCE * MULTIPLIER)
+            "motor/step_n", MEDIAL_MOTOR, makeInt64(LEFT_DISTANCE * MULTIPLIER)
         )
         # raw_motor_action.step_n(MEDIAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def down():
         logging.info("Down")
-        pub_node.publish("/motor/step_n", MEDIAL_MOTOR, makeInt64(RIGHT_DISTANCE))
+        pub_node.publish("motor/step_n", MEDIAL_MOTOR, makeInt64(RIGHT_DISTANCE))
         # raw_motor_action.step_n(MEDIAL_MOTOR, RIGHT_DISTANCE)
 
     @staticmethod
     def bigDown():
         logging.info("Down")
         pub_node.publish(
-            "/motor/step_n", MEDIAL_MOTOR, makeInt64(RIGHT_DISTANCE * MULTIPLIER)
+            "motor/step_n", MEDIAL_MOTOR, makeInt64(RIGHT_DISTANCE * MULTIPLIER)
         )
         # raw_motor_action.step_n(MEDIAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def space():
         logging.info("Space")
-        pub_node.publish("/muscle/contract", MUSCLE)
+        pub_node.publish("muscle/contract", MUSCLE)
         # muscle_actions.contract(MUSCLE, lambda _: True)
 
     @staticmethod
     def end_space():
         logging.info("End Space")
-        pub_node.publish("/muscle/relax", MUSCLE)
+        pub_node.publish("muscle/relax", MUSCLE)
         # muscle_actions.relax(MUSCLE, lambda _: True)
 
 

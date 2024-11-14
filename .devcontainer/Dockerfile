@@ -11,6 +11,6 @@ RUN apt-get install -y \
   ros-dev-tools
 ENV SHELL=/bin/bash
 
-RUN echo "source /opt/ros/jazzy/setup.bash" >> /.bashrc
-
+RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc
+RUN echo "source /workspace/install/local_setup.bash" >> /root/.bashrc
 CMD ["/bin/bash"]

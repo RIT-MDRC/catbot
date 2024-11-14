@@ -7,13 +7,13 @@ from ...state_management import (
     device_parser,
     device_action,
 )
-from . import raw_motor_action
+from . import raw_motor_actions
 
 
 @device
 @dataclass
 class Motor:
-    raw_motor = identifier(raw_motor_action.ctx)
+    raw_motor = identifier(raw_motor_actions.ctx)
     # negative_limit_switch = identifier(input_device_ctx)
     # positive_limit_switch = identifier(input_device_ctx)
 
@@ -37,4 +37,4 @@ def parse_motor(config):
 
 @device_action(ctx)
 def step_n(motor: Motor, n: int):
-    raw_motor_action.step_n(motor.raw_motor, n)
+    raw_motor_actions.step_n(motor.raw_motor, n)

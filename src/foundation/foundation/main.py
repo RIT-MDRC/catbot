@@ -1,13 +1,17 @@
 #!/usr/bin/env /workspace/.venv/bin/python
 
 from dataclasses import dataclass, field
+import logging
 import os
+
+from .state_management._device import Context
 import rclpy
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
-from rclpy.node import Node, Parameter
+from rclpy.node import Node
+from std_msgs.msg import Empty, Int64
 from .state_management import configure_device
 from .component.latch import latch_actions
-from .component.motor import motor_actions
+from .component.motor import raw_motor_actions
 from .component.muscle import muscle_actions
 
 
@@ -16,26 +20,41 @@ latch_actions.USE = True
 
 @dataclass
 class DeviceActionSubscriber:
+    topic: str
     callback: callable
-    topic: str = field(default=None)
-    paramType: object = field(default=Parameter.Type.NOT_SET)
+    context: Context = field(default=None)
+    paramType: object = field(default=Empty)
 
     def __post_init__(self):
-        assert callable(self.callback), "Callback must be a callable"
-        assert hasattr(self.callback, "_ctx"), "Callback must have a context"
+        if self.context is None and hasattr(self.callback, "_ctx"):
+            self.context = self.callback._ctx
         self.topic = self.callback._func_path if self.topic is None else self.topic
+
+        assert callable(self.callback), "Callback must be a callable"
+        assert self.context is not None, "Callback must have a context"
+        assert self.topic is not None, "Topic must be provided"
 
 
 # Subscribers
 SUBSCRIBER_DEVICE_ACTION_CALLBACKS = [
     {
-        "topic": "/motor/step_n",
-        "callback": motor_actions.step_n,
-        "paramType": Parameter.Type.INTEGER,
+        "topic": "motor/step_n",
+        "callback": lambda device, data: raw_motor_actions.step_n(device, data.data),
+        "context": raw_motor_actions.ctx,
+        "paramType": Int64,
     },
-    {"topic": "/muscle/contract", "callback": muscle_actions.contract},
-    {"topic": "/muscle/relax", "callback": muscle_actions.relax},
+    {
+        "topic": "muscle/contract",
+        "callback": lambda device, _: muscle_actions.contract(device),
+        "context": muscle_actions.ctx,
+    },
+    {
+        "topic": "muscle/relax",
+        "callback": lambda device, _: muscle_actions.relax(device),
+        "context": muscle_actions.ctx,
+    },
 ]
+FOUNDATION_NODE_NAME = "foundation_node"
 
 
 class DeviceActionSubscriberNode(Node):
@@ -52,20 +71,23 @@ class DeviceActionSubscriberNode(Node):
         for subscriber in subscribers_info:
             topic = subscriber.topic
             callback = subscriber.callback
-            context = getattr(callback, "_ctx")
-            paramType = subscriber.param_type
+            context = subscriber.context
+            paramType = subscriber.paramType
             for device_name, device in context.store.items():
 
                 def dev_callback(msg):
+                    logging.info(f"Received message: {msg}")
+                    print(f"Received message: {msg}")
                     try:
                         callback(
                             device, msg
                         )  # closure issue may arise if context store is changed
                     except Exception as e:
+                        logging.error(f"Error: {e}")
                         self.get_logger().error(f"Error: {e}")
 
                 self.create_subscription(
-                    Parameter.Type.NOT_SET if paramType is None else paramType,
+                    Empty if paramType is None else paramType,
                     f"{topic}/{device_name}",  # Topic path
                     dev_callback,  # Callback function
                     10,  # QoS profile depth
