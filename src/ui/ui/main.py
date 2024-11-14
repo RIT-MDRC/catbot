@@ -1,16 +1,18 @@
-#!/usr/bin/env ../../../.venv/bin/python
+#!/usr/bin/env /workspace/.venv/bin/python
 
 from dataclasses import dataclass, field
 import logging
 import threading
 from asyncio import sleep
 from logging import LogRecord
-from rclpy import Node, Parameter
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import Empty, Int64
 from textual import events, on
 from textual.app import App, ComposeResult
 from textual.containers import Center, Grid, Horizontal, Vertical
 from textual.widgets import Footer, Header, LoadingIndicator, RichLog, Static
-from asset import (
+from .asset import (
     CAT,
     DOWN_ARROW,
     LEFT_ARROW,
@@ -19,11 +21,11 @@ from asset import (
     UP_ARROW,
 )
 import rclpy
-from utils.logger import (
+from .utils.logger import (
     set_log_event_function,
 )
-from component.reactivebutton import ReactiveButton
-from utils.interval import (
+from .component.reactivebutton import ReactiveButton
+from .utils.interval import (
     clear_all,
     clear_intervals,
     clear_timeouts,
@@ -48,19 +50,21 @@ EVENT_TOPICS = [
     {
         "path": "/motor/step_n",
         "devices": MOTOR_LIST,
-        "paramType": Parameter.Type.INTEGER,
+        "paramType": Int64,
     },
     {"path": "/muscle/contract", "devices": MUSCLE_LIST},
     {"path": "/muscle/relax", "devices": MUSCLE_LIST},
 ]
 
 pub_node: "PublishInput" = None
+rosThread: threading.Thread = None
 
 
 @dataclass
 class DevicePublisherTopic:
-    topic: str
-    paramType: object = field(default=Parameter.Type.NOT_SET)
+    path: str
+    devices: list[str]
+    paramType: object = field(default=Empty)
 
 
 class PublishInput(Node):
@@ -80,64 +84,78 @@ class PublishInput(Node):
         for publisher in publishers:
             for device in publisher.devices:
                 self.publishersObjs[
-                    f"{subscriberNodeName}/{publisher.topic}/{device}"
+                    f"{subscriberNodeName}/{publisher.path}/{device}"
                 ] = self.create_publisher(
                     publisher.paramType,
-                    publisher.topic,
+                    publisher.path,
                     10,
                 )
 
-    def publish(self, topic: str, device: str, msg: object):
+    def publish(self, topic: str, device: str, msg: object = Empty()):
         self.publishersObjs[f"{self.subscriberNodeName}/{topic}/{device}"].publish(msg)
+
+
+def makeInt64(data: int) -> Int64:
+    msg = Int64()
+    msg.data = data
+    return msg
 
 
 class DirectionController:
     @staticmethod
     def left():
         logging.info("Left")
-        pub_node.publish("/motor/step_n", LATERAL_MOTOR, LEFT_DISTANCE)
+        pub_node.publish("/motor/step_n", LATERAL_MOTOR, makeInt64(LEFT_DISTANCE))
         # raw_motor_action.step_n(LATERAL_MOTOR, LEFT_DISTANCE)
 
     @staticmethod
     def bigLeft():
         logging.info("Left")
-        pub_node.publish("/motor/step_n", LATERAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
+        pub_node.publish(
+            "/motor/step_n", LATERAL_MOTOR, makeInt64(LEFT_DISTANCE * MULTIPLIER)
+        )
         # raw_motor_action.step_n(LATERAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def right():
         logging.info("Right")
-        pub_node.publish("/motor/step_n", LATERAL_MOTOR, RIGHT_DISTANCE)
+        pub_node.publish("/motor/step_n", LATERAL_MOTOR, makeInt64(RIGHT_DISTANCE))
         # raw_motor_action.step_n(LATERAL_MOTOR, RIGHT_DISTANCE)
 
     @staticmethod
     def bigRight():
         logging.info("Right")
-        pub_node.publish("/motor/step_n", LATERAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
+        pub_node.publish(
+            "/motor/step_n", LATERAL_MOTOR, makeInt64(RIGHT_DISTANCE * MULTIPLIER)
+        )
         # raw_motor_action.step_n(LATERAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def up():
         logging.info("Up")
-        pub_node.publish("/motor/step_n", MEDIAL_MOTOR, LEFT_DISTANCE)
+        pub_node.publish("/motor/step_n", MEDIAL_MOTOR, makeInt64(LEFT_DISTANCE))
         # raw_motor_action.step_n(MEDIAL_MOTOR, LEFT_DISTANCE)
 
     @staticmethod
     def bigUp():
         logging.info("Up")
-        pub_node.publish("/motor/step_n", MEDIAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
+        pub_node.publish(
+            "/motor/step_n", MEDIAL_MOTOR, makeInt64(LEFT_DISTANCE * MULTIPLIER)
+        )
         # raw_motor_action.step_n(MEDIAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def down():
         logging.info("Down")
-        pub_node.publish("/motor/step_n", MEDIAL_MOTOR, RIGHT_DISTANCE)
+        pub_node.publish("/motor/step_n", MEDIAL_MOTOR, makeInt64(RIGHT_DISTANCE))
         # raw_motor_action.step_n(MEDIAL_MOTOR, RIGHT_DISTANCE)
 
     @staticmethod
     def bigDown():
         logging.info("Down")
-        pub_node.publish("/motor/step_n", MEDIAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
+        pub_node.publish(
+            "/motor/step_n", MEDIAL_MOTOR, makeInt64(RIGHT_DISTANCE * MULTIPLIER)
+        )
         # raw_motor_action.step_n(MEDIAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
 
     @staticmethod
@@ -210,6 +228,7 @@ class Main_UI(App):
         self.dark = not self.dark
 
     def action_quit(self):
+        rclpy.shutdown()
         clear_all()
         self.exit()
 
@@ -325,7 +344,7 @@ class Main_UI(App):
 
 
 def main(args=None):
-    global pub_node
+    global pub_node, rosThread
     rclpy.init(args=args)
 
     pub_node = PublishInput()

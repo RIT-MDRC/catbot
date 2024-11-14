@@ -1,7 +1,7 @@
 import logging
 
 from rich.text import TextType
-from utils.interval import set_timeout
+from ..utils.interval import set_timeout
 from textual.message import Message
 from textual.widgets import Button
 from typing_extensions import Literal

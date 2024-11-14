@@ -9,6 +9,7 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
+        ("lib/python3.12/site-packages/ui", ["ui/index.tcss"]),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
@@ -16,7 +17,7 @@ setup(
     maintainer_email="hiroto125takeuchi@gmail.com",
     description="TODO: Package description",
     license="TODO: License declaration",
-    tests_require=["pytest"],
+    # tests_require=["pytest"],
     entry_points={
         "console_scripts": ["ui = ui.main:main"],
     },

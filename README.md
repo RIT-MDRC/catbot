@@ -9,6 +9,19 @@ Quadruped Hybrid Pneumatic-Electric Robot. Utilizes McKibben Muscles for bio-inp
 * Install [Docker](https://docs.docker.com/get-docker/)
 * `ctrl+shift+p` -> `Dev Containers: Reopen in Container`
 
+### Setup Docker environment
+* Run the following
+* `source .venv/bin/activate`
+* `pip install -r requirements.txt`
+* `source /opt/ros/jazzy/setup.bash`
+* `colcon build`
+* `source install/local_setup.bash`
+
+### Run script
+
+To run the UI package:
+* `ros2 run ui ui`
+
 ### Install dependencies
 * install [python](https://www.python.org/downloads/)
 * install [nodejs](https://nodejs.org/en/download/)

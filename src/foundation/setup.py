@@ -16,7 +16,7 @@ setup(
     maintainer_email="hiroto125takeuchi@gmail.com",
     description="Main low-level control node",
     license="My license",
-    tests_require=["pytest"],
+    # tests_require=["pytest"],
     entry_points={
         "console_scripts": [
             "foundation = foundation:main",
