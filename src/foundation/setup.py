@@ -10,6 +10,10 @@ setup(
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
         ("lib/python3.12/site-packages/foundation", ["foundation/pinconfig.json"]),
+        (
+            "lib/python3.12/site-packages/foundation/component/motor",
+            ["foundation/component/motor/odrive-cansimple.dbc"],
+        ),
     ],
     install_requires=["setuptools", "dotenv"],
     zip_safe=True,

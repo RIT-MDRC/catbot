@@ -10,3 +10,4 @@ pydantic
 lark-parser
 numpy==2.1.3
 colcon-common-extensions
+cantools

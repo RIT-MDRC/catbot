@@ -77,5 +77,19 @@
 			"pressure": "adc_1.pot1",
 			"valve": "valve"
 		}
+	},
+	"can_bus": {
+		"can_bus_1": {
+		}
+	},
+	"odrive_motor": {
+		"odrive_1": {
+			"bus": "can_bus_1",
+			"axisID": 0,
+			"control_mode": 3,
+			"input_mode": 5,
+			"position_min": -35,
+			"position_max": 35
+		}
 	}
 }
