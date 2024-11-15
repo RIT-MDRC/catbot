@@ -31,6 +31,8 @@ class ODriveMotor:
     current_position: float = None
     current_velocity: float = None
 
+    strict_bounds: bool = True
+
     def __post_init__(self):
         can_bus.add_listener(self.bus, self.axisID, lambda msg: read_message(self, msg))
 
@@ -47,7 +49,7 @@ EVENT_IGNORE = [
 ]
 
 
-def read_message(motor, msg):
+def read_message(motor: ODriveMotor, msg):
     msg_id = msg.arbitration_id & 0x1F
     msg_db = ODRIVE_CAN_DB.get_message_by_frame_id(msg_id)
     if msg_db.name in EVENT_HANDLE:
@@ -67,7 +69,7 @@ def event_decorator(name):
 
 
 @event_decorator("Heartbeat")
-def read_heartbeat(motor, data):
+def read_heartbeat(motor: ODriveMotor, data):
     state = data["Axis_State"].value
     motor.current_state = state
     logging.info(f"Axis {motor.axisID} Heartbeat w/ state: " + str(state))
@@ -79,32 +81,48 @@ def read_heartbeat(motor, data):
 
 
 @event_decorator("Get_Encoder_Estimates")
-def update_estimates(motor, data):
+def update_estimates(motor: ODriveMotor, data):
     motor.current_position = data["Pos_Estimate"]
     motor.current_velocity = data["Vel_Estimate"]
 
+    if motor.strict_bounds:
+        if (
+            motor.position_min is not None
+            and motor.current_position <= motor.position_min
+            and motor.current_velocity < 0
+        ):
+            logging.warning(f"Motor {motor.axisID} has reached its lower bounds.")
+            stop(motor)
+        elif (
+            motor.position_max is not None
+            and motor.current_position >= motor.position_max
+            and motor.current_velocity > 0
+        ):
+            logging.warning(f"Motor {motor.axisID} has reached its upper bounds.")
+            stop(motor)
+
 
 @event_decorator("Get_Motor_Error")
-def report_motor_error(motor, data):
+def report_motor_error(motor: ODriveMotor, data):
     logging.error(f"Motor Error on axis {motor.axisID} w/ following data: " + str(data))
 
 
 @event_decorator("Get_Encoder_Error")
-def report_encoder_error(motor, data):
+def report_encoder_error(motor: ODriveMotor, data):
     logging.error(
         f"Encoder Error on axis {motor.axisID} w/ following data: " + str(data)
     )
 
 
 @event_decorator("Get_Sensorless_Error")
-def report_sensorless_error(motor, data):
+def report_sensorless_error(motor: ODriveMotor, data):
     logging.error(
         f"Sensorless Error on axis {motor.axisID} w/ following data: " + str(data)
     )
 
 
 @event_decorator("Get_Controller_Error")
-def report_controller_error(motor, data):
+def report_controller_error(motor: ODriveMotor, data):
     logging.error(
         f"Controller Error on axis {motor.axisID} w/ following data: " + str(data)
     )
@@ -148,11 +166,21 @@ def set_target_position(
         )
         return False
     if motor.position_min != None and position < motor.position_min:
+        if motor.strict_bounds:
+            logging.error(
+                f"Attempting to set position on motor {motor.axisID} past lower bounds in strict bounds mode. This can be turned off by setting strict_bounds to False in pinconfig.json."
+            )
+            return False
         logging.warning(
             f"Attempting to set position on motor {motor.axisID} past lower bounds."
         )
         position = motor.position_min
     elif motor.position_max != None and position > motor.position_max:
+        if motor.strict_bounds:
+            logging.error(
+                f"Attempting to set position on motor {motor.axisID} past upper bounds in strict bounds mode. This can be turned off by setting strict_bounds to False in pinconfig.json."
+            )
+            return False
         logging.warning(
             f"Attempting to set position on motor {motor.axisID} past upper bounds."
         )
