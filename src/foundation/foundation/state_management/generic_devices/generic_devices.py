@@ -1,6 +1,9 @@
+from dataclasses import dataclass
 import logging
 
 from gpiozero import DigitalInputDevice, DigitalOutputDevice, PWMOutputDevice
+
+from .._device import device
 from .. import create_generic_context, device_parser
 from ..utils import (
     FakeDigitalInputDevice,
@@ -13,6 +16,8 @@ __all__ = [
     "input_device_ctx",
     "output_device_ctx",
     "pwm_output_device_ctx",
+    "analog_input_device_ctx",
+    "AnalogInputDevice",
 ]
 
 input_device_ctx = create_generic_context(
@@ -113,3 +118,34 @@ def parse_pwm_output_device(config):
         return FakePWMOutputDevice(**input)
     else:
         return PWMOutputDevice(**input)
+
+
+@device
+@dataclass
+class AnalogInputDevice:
+    pin: int
+
+    @property
+    def value(self):
+        raise NotImplementedError("AnalogInputDevice must implement value method")
+
+
+analog_input_device_ctx = create_generic_context(
+    "analog_input_device", (AnalogInputDevice)
+)
+
+
+@device_parser(analog_input_device_ctx)
+def parse_analog_input_device(config):
+    """
+    Parse a new pwm output device.
+
+    Args:
+        pin_num (int): the pin number of the device
+
+    Returns:
+        (PWMOutputDevice) the new pwm output device
+    """
+    input = {"pin": config} if isinstance(config, int) else config
+    input = {k: v for k, v in input.items() if k != "_identifier"}
+    return AnalogInputDevice(**input)

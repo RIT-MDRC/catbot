@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 import logging
 import os
+from typing import Union
 
 from .state_management._device import Context
 import rclpy
@@ -10,12 +11,12 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
 from std_msgs.msg import Empty, Int64
 from .state_management import configure_device
-from .component.latch import latch_actions
 from .component.motor import raw_motor_actions
-from .component.muscle import muscle_actions
+from .component.muscle import muscle_actions, pressure_actions
+from .component.compressor import compressor_actions
+from .component.adc import adc_action
 
-
-latch_actions.USE = True
+adc_action.USE = True
 
 
 @dataclass
@@ -33,6 +34,16 @@ class DeviceActionSubscriber:
         assert callable(self.callback), "Callback must be a callable"
         assert self.context is not None, "Callback must have a context"
         assert self.topic is not None, "Topic must be provided"
+
+
+@dataclass
+class DeviceActionTimer:
+    period: float
+    callback: Union[callable, list[callable]]
+
+    def __post_init__(self):
+        if not isinstance(self.callback, list):
+            self.callback = [self.callback]
 
 
 # Subscribers
@@ -54,18 +65,61 @@ SUBSCRIBER_DEVICE_ACTION_CALLBACKS = [
         "context": muscle_actions.ctx,
     },
 ]
-FOUNDATION_NODE_NAME = "foundation_node"
+
+
+def check_pressure(presure_device, compressor_device):
+    reading = (
+        f"Reading {presure_device}: {pressure_actions.get_pressure(presure_device)}"
+    )
+    logging.info(reading)
+    print(reading)
+
+
+TIMER_DEVICE_ACTION_CALLBACKS = [
+    {
+        "period": 0.2,
+        "callback": [
+            lambda: check_pressure("adc_1.pot1", ""),
+            lambda: check_pressure("adc_1.pot2", ""),
+            lambda: check_pressure("adc_1.pot3", ""),
+            lambda: check_pressure("adc_1.pot4", ""),
+            lambda: check_pressure("adc_1.pot5", ""),
+            lambda: check_pressure("adc_1.pot6", ""),
+            lambda: check_pressure("adc_1.pot7", ""),
+            lambda: check_pressure("adc_1.pot8", ""),
+        ],
+    }
+]
 
 
 class DeviceActionSubscriberNode(Node):
-    def __init__(self, nodeName, subscribers_info):
+    callback_group: MutuallyExclusiveCallbackGroup
+    subs: list[dict]
+    ti: list[dict]
+
+    def __init__(self, nodeName, subscribers, timers):
         configure_device(os.path.join(f"{os.path.dirname(__file__)}/pinconfig.json"))
         super().__init__(nodeName)
-
-        # Create a Mutex CallbackGroup
+        self.subs = subscribers
+        self.ti = timers
         self.callback_group = MutuallyExclusiveCallbackGroup()
+
+    def setup_timers(self):
+        timers_info = [DeviceActionTimer(**timer) for timer in self.ti]
+        for timer in timers_info:
+
+            def timer_callback():
+                for callback in timer.callback:
+                    callback()
+
+            self.create_timer(
+                timer.period, timer_callback, callback_group=self.callback_group
+            )
+
+    def setup_subscribers(self):
+        # Create a Mutex CallbackGroup
         subscribers_info = [
-            DeviceActionSubscriber(**subscriber) for subscriber in subscribers_info
+            DeviceActionSubscriber(**subscriber) for subscriber in self.subs
         ]
         # Iterate through the list of tuples and create subscribers
         for subscriber in subscribers_info:
@@ -99,8 +153,12 @@ def main(args=None):
     rclpy.init(args=args)
 
     node = DeviceActionSubscriberNode(
-        "foundation_node", SUBSCRIBER_DEVICE_ACTION_CALLBACKS
+        "foundation_node",
+        SUBSCRIBER_DEVICE_ACTION_CALLBACKS,
+        TIMER_DEVICE_ACTION_CALLBACKS,
     )
+    node.setup_subscribers()
+    node.setup_timers()
 
     try:
         rclpy.spin(node)

@@ -1,16 +1,21 @@
 import logging
 from dataclasses import dataclass
 
+from ...state_management.generic_devices.generic_devices import AnalogInputDevice
+
+from ...state_management.generic_devices import analog_input_device_ctx
+
 from ...component.smbus import smbus_actions
 from smbus2 import i2c_msg
 from ...state_management import (
     create_context,
     device,
-    device_action,
     device_parser,
     identifier,
     register_device,
 )
+
+USE = False
 
 
 class ADCAnalogInputDevice:
@@ -29,36 +34,6 @@ class ADCAnalogInputDevice:
         return self.adc.read_data(self.address)
 
 
-analog_input_device_ctx = create_context("analog_input_device", (ADCAnalogInputDevice))
-
-
-@device_parser(analog_input_device_ctx)
-def parse_analog_input_device(config: dict):
-    """
-    Parse a new analog input device.
-
-    Config:
-    {
-        adc: ADC = adc object
-        address: int = address of the device on the adc
-    }
-    """
-    return ADCAnalogInputDevice(**config)
-
-
-@device_action(analog_input_device_ctx)
-def get_data(analog_input_device: ADCAnalogInputDevice) -> list[int]:
-    """analog input device's bytearr to data
-
-    Args:
-        analog_input_device (ADC_action.ADCAnalogInputDevice): analog input device object
-
-    Returns:
-        list[int] = bytearr of the analog input device
-    """
-    return analog_input_device.value[1]
-
-
 @device
 @dataclass
 class ADC:
@@ -72,7 +47,7 @@ class ADC:
     _identifier: str
     i2c: smbus_actions.SMBus = identifier(smbus_actions.ctx)
 
-    def read_data(self, register: list):
+    def read_data(self, register: list) -> int:
         """
         Get the degrees from the adc device.
 
@@ -117,6 +92,13 @@ def parse_adc(config: dict):
     adc = ADC(**config)
 
     power_down = config["power_down"]
+
+    if not ADCAnalogInputDevice in analog_input_device_ctx.allowed_classes:
+        analog_input_device_ctx.allowed_classes = (
+            ADCAnalogInputDevice,
+            *analog_input_device_ctx.allowed_classes,
+        )
+
     for name, addr in adc.input_devices.items():
         # 1 bit for Single-Ended/Differential Inputs and 3 channel bits
         register: int = 1 << 3 | channel_to_adc_addr(addr)

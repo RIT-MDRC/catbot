@@ -1,7 +1,9 @@
 import logging
 from dataclasses import dataclass
 
-from gpiozero import DigitalInputDevice, DigitalOutputDevice
+from gpiozero import DigitalOutputDevice
+
+from ...state_management.generic_devices.generic_devices import AnalogInputDevice
 from ...state_management import (
     create_generic_context,
     device,
@@ -22,8 +24,9 @@ class MuscleObj:
         valve (str): the name of the valve
     """
 
-    pressure: DigitalInputDevice = identifier(pressure_actions.ctx)
+    pressure: AnalogInputDevice = identifier(pressure_actions.ctx)
     valve: DigitalOutputDevice = identifier(valve_actions.ctx)
+    pressure_threshold: int = 0.3
 
     def __getitem__(self, key):
         return getattr(self, key)
@@ -50,7 +53,7 @@ def parse_muscle(data: dict) -> MuscleObj:
 
 
 @device_action(ctx)
-def contract(muscle: MuscleObj, check=pressure_actions.is_pressure_ok) -> bool:
+def contract(muscle: MuscleObj) -> bool:
     """
     Contract a muscle.
 
@@ -62,7 +65,7 @@ def contract(muscle: MuscleObj, check=pressure_actions.is_pressure_ok) -> bool:
         True if the muscle was contracted, False otherwise
     """
     logging.info("Contracting muscle %s", muscle)
-    if not check(muscle.pressure):
+    if pressure_actions.lt(muscle.pressure, muscle.pressure_threshold):
         logging.warning(
             f"{muscle.pressure}: Pressure check failed, cannot contract muscle"
         )
@@ -72,7 +75,7 @@ def contract(muscle: MuscleObj, check=pressure_actions.is_pressure_ok) -> bool:
 
 
 @device_action(ctx)
-def relax(muscle: MuscleObj, check=valve_actions.get_valve_state) -> bool:
+def relax(muscle: MuscleObj) -> bool:
     """
     Relax a muscle.
 
@@ -84,7 +87,7 @@ def relax(muscle: MuscleObj, check=valve_actions.get_valve_state) -> bool:
         True if the muscle was relaxed, False otherwise
     """
     logging.info("relaxing muscle %s", muscle)
-    if not check(muscle.valve):
+    if not valve_actions.get_valve_state(muscle.valve):
         logging.warning(
             f"{muscle.valve}: Valve check failed, Muscle is already relaxed"
         )

@@ -1,42 +1,52 @@
-from gpiozero import DigitalInputDevice
-from .....state_management import create_masked_context, device_action, input_device_ctx
+from .....state_management import (
+    create_masked_context,
+    device_action,
+    analog_input_device_ctx,
+    AnalogInputDevice,
+)
 
-ctx = create_masked_context(input_device_ctx, "pressure")
+ctx = create_masked_context(analog_input_device_ctx, "pressure")
 
 
 @device_action(ctx)
-def is_pressure_ok(device: DigitalInputDevice) -> bool:
+def get_pressure(device: AnalogInputDevice) -> int:
     """
-    Check if the pressure sensor is ok.
+    Return the pressure's readings.
 
     Args:
         name (str): the name of the pressure sensor
 
     Returns:
-        (bool) true if the pressure sensor is ok, false otherwise
+        (int) the pressure from the pressure sensor
     """
-    return device.is_active
+    return device.value
 
 
 @device_action(ctx)
-def on_pressure_active(device: DigitalInputDevice, action: callable) -> None:
+def gt(device: AnalogInputDevice, value: int = 0.5) -> bool:
     """
-    Add a new pressure sensor change event.
+    Check if the pressure is greater than a value.
 
     Args:
         name (str): the name of the pressure sensor
-        action (callable): the action to perform when the pressure sensor changes
+        value (int): the value to check against (default: 0.5)
+
+    Returns:
+        (bool) true if the condition is met, false otherwise
     """
-    device.when_activated = action
+    return device.value > value
 
 
 @device_action(ctx)
-def on_pressure_deactive(device: DigitalInputDevice, action: callable) -> None:
+def lt(device: AnalogInputDevice, value: int = 0.5) -> bool:
     """
-    Add a new pressure sensor change event.
+    Check if the pressure is less than a value.
 
     Args:
         name (str): the name of the pressure sensor
-        action (callable): the action to perform when the pressure sensor changes
+        value (int): the value to check against (default: 0.5)
+
+    Returns:
+        (bool) true if the condition is met, false otherwise
     """
-    device.when_deactivated = action
+    return device.value < value

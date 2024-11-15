@@ -74,7 +74,9 @@ def create_context(
     )
 
 
-def create_masked_context(ctx: Context, device_name: str):
+def create_masked_context(ctx: Context, device_name: str, extra_classes: list = None):
+    if extra_classes is not None:
+        ctx.allowed_classes += extra_classes
     new_ctx = Context(
         context_name=device_name,
         allowed_classes=ctx.allowed_classes,

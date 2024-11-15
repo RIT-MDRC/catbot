@@ -1,8 +1,8 @@
 import logging
 from time import sleep
 
-from state_management import create_generic_context, device_action, device_parser
-from state_management.utils import FakeSMBus, is_dev
+from ...state_management import create_generic_context, device_action, device_parser
+from ...state_management.utils import FakeSMBus, is_dev
 
 if is_dev():
     from smbus2 import SMBus
