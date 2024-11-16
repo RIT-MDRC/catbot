@@ -9,7 +9,7 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
-        ("lib/python3.12/site-packages/ui", ["ui/index.tcss"]),
+        ("lib/python3.10/site-packages/ui", ["ui/index.tcss"]),
     ],
     install_requires=["setuptools", "dotenv"],
     zip_safe=True,
