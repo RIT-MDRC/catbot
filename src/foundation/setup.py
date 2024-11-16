@@ -22,6 +22,9 @@ setup(
     description="Main low-level control node",
     license="My license",
     # tests_require=["pytest"],
+    prefix=[
+        'sudo -E env "PYTHONPATH=$PYTHONPATH" "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" "PATH=$PATH" "USER=$USER"  bash -c '
+    ],
     entry_points={
         "console_scripts": ["main = foundation.main:main"],
     },
