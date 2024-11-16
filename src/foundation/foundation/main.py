@@ -54,7 +54,7 @@ class DeviceActionTimer:
 SUBSCRIBER_DEVICE_ACTION_CALLBACKS = [
     {
         "topic": "motor/set_target_position",
-        "callback": lambda device, data: motor_actions.set_target_position(
+        "callback": lambda device, data: motor_actions.set_target_velocity(
             device, data.data
         ),
         "context": motor_actions.ctx,
@@ -123,7 +123,7 @@ class DeviceActionSubscriberNode(Node):
         self.ti = timers
         self.callback_group = MutuallyExclusiveCallbackGroup()
         for motor in MOTORS:
-            motor_actions.set_controller_mode(motor)
+            motor_actions.clear_error_message(motor)
 
     def setup_timers(self):
         timers_info = [DeviceActionTimer(**timer) for timer in self.ti]

@@ -302,6 +302,11 @@ def set_controller_mode(
 
 
 @device_action(ctx)
+def clear_error_message(motor: ODriveMotor):
+    return send_message(motor, "Clear_Errors", {})
+
+
+@device_action(ctx)
 def get_control_mode(motor: ODriveMotor) -> ControlMode:
     return motor.control_mode
 

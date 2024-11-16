@@ -19,8 +19,9 @@ DEFAULT_BUS_CONFIG = {
 
 
 @device
-@dataclass(slots=True)
+@dataclass
 class CanBus:
+    silence: bool = field(default=False)  # silence received message log
     busConfig: dict = field(default_factory=dict)
     bus: can.Bus = None
     notifier: can.Notifier = None
@@ -38,7 +39,8 @@ class CanBus:
 
 def read_message(can_bus: CanBus, msg) -> None:
     axisId = msg.arbitration_id >> 5
-    logging.info("Received message with id " + hex(msg.arbitration_id))
+    if not can_bus.silence:
+        logging.info("Received message with id " + hex(msg.arbitration_id))
     if axisId in can_bus.listeners:
         can_bus.listeners[axisId](msg)
     else:
