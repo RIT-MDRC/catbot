@@ -85,7 +85,15 @@
 			"bus": "can_bus_1",
 			"axisID": 0,
 			"control_mode": 3,
-			"input_mode": 5,
+			"input_mode": 1,
+			"position_min": -35,
+			"position_max": 35
+		},
+		"odrive_2": {
+			"bus": "can_bus_1",
+			"axisID": 1,
+			"control_mode": 3,
+			"input_mode": 1,
 			"position_min": -35,
 			"position_max": 35
 		}

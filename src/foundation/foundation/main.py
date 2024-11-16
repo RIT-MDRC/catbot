@@ -14,12 +14,13 @@ from .state_management import configure_device
 from .component.muscle import muscle_actions, pressure_actions
 from .component.compressor import compressor_actions
 from .component.adc import adc_action
-from .component.motor import motor_actions
+from .component.motor import motor_actions, motor_enums
 
 adc_action.USE = True
 
 COMPRESSOR = "main_compressor"
 COMPRESSOR_THRESHOLD = 600
+MOTORS = ["odrive_1", "odrive_2"]
 
 
 @dataclass
@@ -121,6 +122,8 @@ class DeviceActionSubscriberNode(Node):
         self.subs = subscribers
         self.ti = timers
         self.callback_group = MutuallyExclusiveCallbackGroup()
+        for motor in MOTORS:
+            motor_actions.set_controller_mode(motor)
 
     def setup_timers(self):
         timers_info = [DeviceActionTimer(**timer) for timer in self.ti]
@@ -146,10 +149,11 @@ class DeviceActionSubscriberNode(Node):
             context = subscriber.context
             paramType = subscriber.paramType
             for device_name, device in context.store.items():
+                path = f"{topic}/{device_name}"
 
-                def dev_callback(msg):
-                    logging.info(f"Received message: {msg}")
-                    print(f"Received message: {msg}")
+                def dev_callback(msg, callback=callback, path=path, device=device):
+                    logging.info(f"Received message on {path}: {msg}")
+                    print(f"Received message on {path}: {msg}")
                     try:
                         callback(
                             device, msg
@@ -160,7 +164,7 @@ class DeviceActionSubscriberNode(Node):
 
                 self.create_subscription(
                     Empty if paramType is None else paramType,
-                    f"{topic}/{device_name}",  # Topic path
+                    path,  # Topic path
                     dev_callback,  # Callback function
                     10,  # QoS profile depth
                     callback_group=self.callback_group,  # Use the Mutex callback group

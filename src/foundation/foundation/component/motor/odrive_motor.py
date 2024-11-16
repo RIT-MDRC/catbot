@@ -138,7 +138,7 @@ def get_error_num(error):
     # if only 1 flag is present, it returns a "NamedSignalValue"
     # if multiple flags are present, it returns an int
     # "NamedSignalValue" can not be cast to int, the only way to get the number is to do "error.value", which is invalid if "error" is an int
-    if error is int:
+    if isinstance(error, int):
         return error
     else:
         return error.value
