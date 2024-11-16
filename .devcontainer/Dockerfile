@@ -6,7 +6,6 @@ RUN apt-get install -y \
   python3-venv \
   python3-pip \
   libbullet-dev \
-  python3-pip \
   python3-pytest-cov \
   ros-dev-tools
 ENV SHELL=/bin/bash
