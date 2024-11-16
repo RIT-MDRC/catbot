@@ -1,6 +1,5 @@
 {
 	"input_device": {
-		"left_pressure": 27,
 		"expander_interrupt_pin_A": {
 			"pin": 18,
 			"pull_up": true
@@ -14,8 +13,7 @@
 		"pneumatic_0": 17,
 		"pneumatic_1": 27,
 		"pneumatic_2": 23,
-		"pneumatic_3": 22,
-		"valve": 24
+		"pneumatic_3": 22
 	},
 	"smbus2": {
 		"smbus": 1
@@ -75,7 +73,7 @@
 	"muscle": {
 		"left_muscle": {
 			"pressure": "adc_1.pot1",
-			"valve": "valve"
+			"valve": "pneumatic_3"
 		}
 	},
 	"can_bus": {

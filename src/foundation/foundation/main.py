@@ -9,14 +9,17 @@ from .state_management._device import Context
 import rclpy
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.node import Node
-from std_msgs.msg import Empty, Int64
+from std_msgs.msg import Empty, Float64
 from .state_management import configure_device
-from .component.motor import raw_motor_actions
 from .component.muscle import muscle_actions, pressure_actions
 from .component.compressor import compressor_actions
 from .component.adc import adc_action
+from .component.motor import motor_actions
 
 adc_action.USE = True
+
+COMPRESSOR = "main_compressor"
+COMPRESSOR_THRESHOLD = 600
 
 
 @dataclass
@@ -49,10 +52,12 @@ class DeviceActionTimer:
 # Subscribers
 SUBSCRIBER_DEVICE_ACTION_CALLBACKS = [
     {
-        "topic": "motor/step_n",
-        "callback": lambda device, data: raw_motor_actions.step_n(device, data.data),
-        "context": raw_motor_actions.ctx,
-        "paramType": Int64,
+        "topic": "motor/set_target_position",
+        "callback": lambda device, data: motor_actions.set_target_position(
+            device, data.data
+        ),
+        "context": motor_actions.ctx,
+        "paramType": Float64,
     },
     {
         "topic": "muscle/contract",
@@ -66,29 +71,42 @@ SUBSCRIBER_DEVICE_ACTION_CALLBACKS = [
     },
 ]
 
+check_count = 100
+enabled = False
 
-def check_pressure(presure_device, compressor_device):
-    reading = (
-        f"Reading {presure_device}: {pressure_actions.get_pressure(presure_device)}"
-    )
-    logging.info(reading)
+
+def check_pressure(presure_device, compressor_device=None):
+    global enabled, check_count
+    value = pressure_actions.get_pressure(presure_device)
+    reading = f"Reading {presure_device} {check_count}: {value}"
     print(reading)
+    logging.info(reading)
+    if not compressor_device is None:
+        if not enabled:
+            enabled = True
+            compressor_actions.turn_compressor_on(compressor_device)
+            return
+        if value < COMPRESSOR_THRESHOLD:
+            check_count -= 1
+            return
+        elif value > COMPRESSOR_THRESHOLD or check_count <= 0:
+            compressor_actions.turn_compressor_off(compressor_device)
 
 
 TIMER_DEVICE_ACTION_CALLBACKS = [
-    {
-        "period": 0.2,
-        "callback": [
-            lambda: check_pressure("adc_1.pot1", ""),
-            lambda: check_pressure("adc_1.pot2", ""),
-            lambda: check_pressure("adc_1.pot3", ""),
-            lambda: check_pressure("adc_1.pot4", ""),
-            lambda: check_pressure("adc_1.pot5", ""),
-            lambda: check_pressure("adc_1.pot6", ""),
-            lambda: check_pressure("adc_1.pot7", ""),
-            lambda: check_pressure("adc_1.pot8", ""),
-        ],
-    }
+    # {
+    #     "period": 0.2,
+    #     "callback": [
+    #         lambda: check_pressure("adc_1.pot1"),
+    #         lambda: check_pressure("adc_1.pot2"),
+    #         lambda: check_pressure("adc_1.pot3"),
+    #         lambda: check_pressure("adc_1.pot4"),
+    #         lambda: check_pressure("adc_1.pot5"),
+    #         lambda: check_pressure("adc_1.pot6"),
+    #         lambda: check_pressure("adc_1.pot7"),
+    #         lambda: check_pressure("adc_1.pot8"),
+    #     ],
+    # }
 ]
 
 
@@ -165,7 +183,6 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
 
-    node.destroy_node()
     rclpy.shutdown()
 
 

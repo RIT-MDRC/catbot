@@ -7,7 +7,7 @@ from asyncio import sleep
 from logging import LogRecord
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Empty, Int64
+from std_msgs.msg import Empty, Float64
 from textual import events, on
 from textual.app import App, ComposeResult
 from textual.containers import Center, Grid, Horizontal, Vertical
@@ -34,23 +34,23 @@ from .utils.interval import (
 )
 
 MUSCLE = "left_muscle"
-LATERAL_MOTOR = "motor_1"
-MEDIAL_MOTOR = "motor_2"
+LATERAL_MOTOR = "odrive_1"
+MEDIAL_MOTOR = "odrive_1"
 
 MUSCLE_LIST = [MUSCLE]
-MOTOR_LIST = [LATERAL_MOTOR, MEDIAL_MOTOR]
+MOTOR_LIST = [LATERAL_MOTOR]
 
-LEFT_DISTANCE = 2
-RIGHT_DISTANCE = -2
-MULTIPLIER = 8
+LEFT_DISTANCE = 2.0
+RIGHT_DISTANCE = -2.0
+MULTIPLIER = 3
 
 FOUNDATION_NODE_NAME = "foundation_node"
 
 EVENT_TOPICS = [
     {
-        "path": "motor/step_n",
+        "path": "motor/set_target_position",
         "devices": MOTOR_LIST,
-        "paramType": Int64,
+        "paramType": Float64,
     },
     {"path": "muscle/contract", "devices": MUSCLE_LIST},
     {"path": "muscle/relax", "devices": MUSCLE_LIST},
@@ -91,8 +91,8 @@ class PublishInput(Node):
         self.publishersObjs[f"{topic}/{device}"].publish(msg)
 
 
-def makeInt64(data: int) -> Int64:
-    msg = Int64()
+def makeFloat64(data: float) -> Float64:
+    msg = Float64()
     msg.data = data
     return msg
 
@@ -101,56 +101,72 @@ class DirectionController:
     @staticmethod
     def left():
         logging.info("Left")
-        pub_node.publish("motor/step_n", LATERAL_MOTOR, makeInt64(LEFT_DISTANCE))
+        pub_node.publish(
+            "motor/set_target_position", LATERAL_MOTOR, makeFloat64(LEFT_DISTANCE)
+        )
         # raw_motor_action.step_n(LATERAL_MOTOR, LEFT_DISTANCE)
 
     @staticmethod
     def bigLeft():
         logging.info("Left")
         pub_node.publish(
-            "motor/step_n", LATERAL_MOTOR, makeInt64(LEFT_DISTANCE * MULTIPLIER)
+            "motor/set_target_position",
+            LATERAL_MOTOR,
+            makeFloat64(LEFT_DISTANCE * MULTIPLIER),
         )
         # raw_motor_action.step_n(LATERAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def right():
         logging.info("Right")
-        pub_node.publish("motor/step_n", LATERAL_MOTOR, makeInt64(RIGHT_DISTANCE))
+        pub_node.publish(
+            "motor/set_target_position", LATERAL_MOTOR, makeFloat64(RIGHT_DISTANCE)
+        )
         # raw_motor_action.step_n(LATERAL_MOTOR, RIGHT_DISTANCE)
 
     @staticmethod
     def bigRight():
         logging.info("Right")
         pub_node.publish(
-            "motor/step_n", LATERAL_MOTOR, makeInt64(RIGHT_DISTANCE * MULTIPLIER)
+            "motor/set_target_position",
+            LATERAL_MOTOR,
+            makeFloat64(RIGHT_DISTANCE * MULTIPLIER),
         )
         # raw_motor_action.step_n(LATERAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def up():
         logging.info("Up")
-        pub_node.publish("motor/step_n", MEDIAL_MOTOR, makeInt64(LEFT_DISTANCE))
+        pub_node.publish(
+            "motor/set_target_position", MEDIAL_MOTOR, makeFloat64(LEFT_DISTANCE)
+        )
         # raw_motor_action.step_n(MEDIAL_MOTOR, LEFT_DISTANCE)
 
     @staticmethod
     def bigUp():
         logging.info("Up")
         pub_node.publish(
-            "motor/step_n", MEDIAL_MOTOR, makeInt64(LEFT_DISTANCE * MULTIPLIER)
+            "motor/set_target_position",
+            MEDIAL_MOTOR,
+            makeFloat64(LEFT_DISTANCE * MULTIPLIER),
         )
         # raw_motor_action.step_n(MEDIAL_MOTOR, LEFT_DISTANCE * MULTIPLIER)
 
     @staticmethod
     def down():
         logging.info("Down")
-        pub_node.publish("motor/step_n", MEDIAL_MOTOR, makeInt64(RIGHT_DISTANCE))
+        pub_node.publish(
+            "motor/set_target_position", MEDIAL_MOTOR, makeFloat64(RIGHT_DISTANCE)
+        )
         # raw_motor_action.step_n(MEDIAL_MOTOR, RIGHT_DISTANCE)
 
     @staticmethod
     def bigDown():
         logging.info("Down")
         pub_node.publish(
-            "motor/step_n", MEDIAL_MOTOR, makeInt64(RIGHT_DISTANCE * MULTIPLIER)
+            "motor/set_target_position",
+            MEDIAL_MOTOR,
+            makeFloat64(RIGHT_DISTANCE * MULTIPLIER),
         )
         # raw_motor_action.step_n(MEDIAL_MOTOR, RIGHT_DISTANCE * MULTIPLIER)
 

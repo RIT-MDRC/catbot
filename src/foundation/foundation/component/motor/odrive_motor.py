@@ -1,11 +1,12 @@
+import os
 import cantools
 import logging
 from dataclasses import dataclass
-from component.motor.odrive_enums import *
+from .odrive_enums import *
 
-import component.can.can_bus as can_bus
+from ..can import can_actions
 
-from state_management import (
+from ...state_management import (
     create_generic_context,
     device,
     device_action,
@@ -13,7 +14,9 @@ from state_management import (
     identifier,
 )
 
-ODRIVE_CAN_DB = cantools.db.load_file("src/raspi/component/motor/odrive-cansimple.dbc")
+ODRIVE_CAN_DB = cantools.db.load_file(
+    os.path.dirname(__file__) + "/odrive-cansimple.dbc"
+)
 
 
 @device
@@ -23,7 +26,7 @@ class ODriveMotor:
     control_mode: ControlMode
     input_mode: InputMode
     # reminder: fields with default values must come after fields without defaults
-    bus: can_bus.CanBus = identifier(can_bus.ctx)
+    bus: can_actions.CanBus = identifier(can_actions.ctx)
     position_min: float = None
     position_max: float = None
 
@@ -34,7 +37,9 @@ class ODriveMotor:
     strict_bounds: bool = True
 
     def __post_init__(self):
-        can_bus.add_listener(self.bus, self.axisID, lambda msg: read_message(self, msg))
+        can_actions.add_listener(
+            self.bus, self.axisID, lambda msg: read_message(self, msg)
+        )
 
 
 # region Message Handling
@@ -311,7 +316,7 @@ def send_message(motor: ODriveMotor, msg_name: str, data: dict) -> bool:
     msg = ODRIVE_CAN_DB.get_message_by_name(msg_name)
     msg_id = msg.frame_id | motor.axisID << 5
     data = msg.encode(data)
-    return can_bus.send_message(motor.bus, msg_id, data)
+    return can_actions.send_message(motor.bus, msg_id, data)
 
 
 # endregion

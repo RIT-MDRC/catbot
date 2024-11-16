@@ -31,7 +31,7 @@ class ADCAnalogInputDevice:
 
     @property
     def value(self):
-        return self.adc.read_data(self.address)
+        return int.from_bytes(self.adc.read_data(self.address)[1], "big")
 
 
 @device
