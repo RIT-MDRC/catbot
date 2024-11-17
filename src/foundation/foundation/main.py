@@ -122,8 +122,8 @@ class DeviceActionSubscriberNode(Node):
         self.subs = subscribers
         self.ti = timers
         self.callback_group = MutuallyExclusiveCallbackGroup()
-        for motor in MOTORS:
-            motor_actions.clear_error_message(motor)
+        # for motor in MOTORS:
+        #     motor_actions.clear_error_message(motor)
 
     def setup_timers(self):
         timers_info = [DeviceActionTimer(**timer) for timer in self.ti]

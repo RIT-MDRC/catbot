@@ -76,13 +76,14 @@ def event_decorator(name):
 @event_decorator("Heartbeat")
 def read_heartbeat(motor: ODriveMotor, data):
     state = data["Axis_State"].value
-    motor.current_state = state
-    logging.info(f"Axis {motor.axisID} Heartbeat w/ state: " + str(state))
-    axis_error = data["Axis_Error"]
-    if get_error_num(axis_error) != 0:
-        logging.error(
-            f"Axis {motor.axisID} Error w/ following data: " + str(axis_error)
-        )
+    if motor.current_state != state:
+        motor.current_state = state
+        logging.info(f"Axis {motor.axisID} Heartbeat w/ state: " + str(state))
+        axis_error = data["Axis_Error"]
+        if get_error_num(axis_error) != 0:
+            logging.error(
+                f"Axis {motor.axisID} Error w/ following data: " + str(axis_error)
+            )
 
 
 @event_decorator("Get_Encoder_Estimates")

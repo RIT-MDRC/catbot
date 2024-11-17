@@ -21,7 +21,9 @@ from .asset import (
     UP_ARROW,
 )
 import rclpy
+from watchdog.observers import Observer, ObserverType
 from .utils.logger import (
+    LogHandler,
     set_log_event_function,
 )
 from .component.reactivebutton import ReactiveButton
@@ -183,6 +185,8 @@ class DirectionController:
 
 class Main_UI(App):
 
+    file_observer: ObserverType
+
     CSS_PATH = "index.tcss"
     BINDINGS = [("h", "toggle_dark", "Toggle dark mode"), ("q", "quit", "Quit")]
 
@@ -245,16 +249,18 @@ class Main_UI(App):
     def on_ready(self):
         self.logger = self.query_one(RichLog)
 
-        def log_event(event: LogRecord):
-            self.logger.write(f"{event.filename}:{event.msg % event.args}")
-            return True
+        self.file_observer = Observer()
+        log_handler = LogHandler(self.logger, self.file_observer)
+        self.file_observer.schedule(log_handler, ".log", recursive=True)
+        self.file_observer.start()
 
-        set_log_event_function(log_event)
-
-        logging.info("Initialized components from pinconfig")
-        sleep(1)
+        sleep(0.8)
         self.query_one("#mdrc").styles.display = "none"
         self.query_one("#controller").styles.display = "block"
+
+    def clean_up(self):
+        self.file_observer.stop()
+        self.file_observer.join()
 
     @on(ReactiveButton.Active, "#up")
     async def action_up(self):
@@ -359,13 +365,17 @@ def main(args=None):
 
     pub_node = PublishInput()
     rosThread = threading.Thread(target=lambda: rclpy.spin(pub_node))
+    app = Main_UI()
 
     try:
         rosThread.start()
-        Main_UI().run()
+        app.run()
     except Exception as e:
         clear_all()
+        app.clean_up()
         raise
+    clear_all()
+    app.clean_up()
 
 
 if __name__ == "__main__":
