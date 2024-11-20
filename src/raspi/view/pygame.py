@@ -110,10 +110,6 @@ def render_temperature_status(temperature: float):
     render_text((0, 144, 640, 36), f"Temperature: {temperature}")
 
 
-def render_row(row: int, text):
-    render_text((0, 36*row, 640, 36), text)
-
-
 def get_keys():
     return pygame.event.get()
 
