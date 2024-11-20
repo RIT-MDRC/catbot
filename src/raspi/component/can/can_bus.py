@@ -1,70 +1,64 @@
 import can
+import cantools
+import math
+import time
 import logging
-from typing import Callable
-from dataclasses import dataclass, field
 
-from state_management import (
-    create_generic_context,
-    device,
-    device_action,
-    device_parser,
-)
-
-DEFAULT_BUS_CONFIG = {"channel": "can0", "interface": "socketcan", "config_context": None, "ignore_config": False}
-
-@device
-@dataclass(slots = True)
 class CanBus:
-    busConfig : dict = field(default_factory=dict)
-    bus: can.Bus = None
-    notifier : can.Notifier = None
-    listeners : dict = field(default_factory=dict)
+    bus: can.Bus
+    db: object
 
-    def __post_init__(self):
-        self.busConfig = {**DEFAULT_BUS_CONFIG, **self.busConfig}
-        self.bus = self.bus if self.bus else can.Bus(**self.busConfig) 
-        self.notifier = self.notifier if self.notifier else can.Notifier(self.bus, [lambda msg: read_message(self, msg)])
-
-def read_message(can_bus: CanBus, msg) -> None:
-    axisId = msg.arbitration_id >> 5
-    logging.info("Received message with id " + hex(msg.arbitration_id))
-    if axisId in can_bus.listeners:
-        can_bus.listeners[axisId](msg)
-    else:
-        logging.warning("Unhandled message with id " + hex(msg.arbitration_id))
-
-ctx = create_generic_context("can_bus", [CanBus])
-
-@device_parser(ctx)
-def parse_can_bus(data: dict) -> CanBus:
-    return CanBus(**data)
-
-@device_action(ctx)
-def send_message(bus: CanBus, arbitration_id: int, data, is_extended_id: bool = False) -> bool:
-    """Sends a message through the can bus. Returns whether the send was successful."""
-    msg = can.Message(arbitration_id=arbitration_id, is_extended_id = is_extended_id, data = data)
-    try:
-        bus.bus.send(msg)
-        return True
-    except can.CanError:
-        logging.error("Unable to send message on CAN bus.")
-        return False
+    def __init__(self,channel = "can0",interface = "socketcan",config_context = None, ignore_config = False, **kwargs):
+        self.db = cantools.database.load_file("src/raspi/odrive-cansimple.dbc")
+        self.bus = can.Bus(channel,interface,config_context,ignore_config,**kwargs)
     
-@device_action(ctx)
-def send_message_recurring(bus: CanBus, arbitration_id: int, data, period: float, is_extended_id: bool = False, duration: float = None, modifier_callback: Callable[[object], None] = None) -> object:
-    """Repeatedly sends a message through the can bus. Returns a task for it."""
-    msg = can.Message(arbitration_id=arbitration_id, is_extended_id = is_extended_id, data = data)
-    return bus.send_periodic(msg, period, duration, modifier_callback=modifier_callback)
-    
-@device_action(ctx)
-def add_listener(bus: CanBus, axisID: int, callback: Callable[[object], None]) -> None:
-    """Adds a listener to check for messages on a certain axis. There should be one listener per axis."""
-    if axisID in bus.listeners:
-        logging.warning("Attempting to register multiple listeners for the same CAN Axis when only one allowed. Overriding old listener.")
-    bus.listeners[axisID] = callback
 
-@device_action(ctx)
-def close(bus: CanBus) -> None:
-    logging.info("Closing CAN Bus")
-    bus.notifier.stop()
-    bus.bus.shutdown()
+# TODO: Move MotorController into it's own file.
+class MotorController:
+    axis_id: int
+    can: CanBus
+
+
+    def __init__(self, can: CanBus, axis_id: int):
+        self.axis_id = axis_id
+        self.can = can
+
+    
+    def send_message(self, message_name: str, message_data: dict):
+        """
+        Send a message to this motor controller's can bus.
+        """
+        # create message
+        msg = self.can.db.get_message_by_name(message_name)
+        data = msg.encode(message_data)
+        msg = self.can.Message(arbitration_id = msg.frame_id | self.axis_id << 5, is_extended_id = False, data = data)
+        logging.info(self.can.db.decode_message(message_name, msg.data))
+        logging.info(msg)
+
+        # send message
+        try:
+            self.can.bus.send(msg)
+            logging.info("Message sent on {}".format(self.can.bus.channel_info))
+        except self.can.CanError:
+            logging.error("Message NOT sent!  Please verify can0 is working first")
+    
+
+    def receive_single_message(self):
+        """
+        Recieve a single message (likely not the expected one), depends on how can.recv() works
+        """
+        msg = self.can.recv()
+        logging.info(msg)
+        return msg
+    
+    
+    def recieve_message_by_name(self,message_name):
+        """
+        Receive a message by name from can.recv(), depends on how can.recv() works
+        """
+        while True:
+            msg = self.bus.recv()
+            if  msg.arbitration_id == ((self.axis_id << 5) | self.can.bus.db.get_message_by_name(message_name).frame_id):
+                logging.info(msg)
+                return msg
+
