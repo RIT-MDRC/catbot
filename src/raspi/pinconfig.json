@@ -107,5 +107,20 @@
 			"left_limit_switch": "io_expander_1.channel_4",
 			"right_limit_switch": "io_expander_1.channel_5"
 		}
+	},
+	"can_bus": {
+		"can_bus_1": {
+		}
+	},
+	"odrive_motor": {
+		"odrive_1": {
+			"bus": "can_bus_1",
+			"axisID": 0,
+
+			"control_mode": 3,
+			"input_mode": 5,
+			"position_min": -35,
+			"position_max": 35
+		}
 	}
 }
