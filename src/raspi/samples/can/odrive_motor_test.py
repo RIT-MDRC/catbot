@@ -31,9 +31,10 @@ def main():
     exit = False
     left_input = False
     right_input = False
-    speed = 15
+    speed = 5
     use_speed_limit = True
     resting_pos = 0
+    
     while not exit:
         change = False
         for event in get_keys():
@@ -45,16 +46,20 @@ def main():
                     right_input = True
                     change = True
                 elif event.key in [pygame.K_w, pygame.K_UP]:
-                    speed += 1
+                    speed += 0.1
                     change = True
                 elif event.key in [pygame.K_s, pygame.K_DOWN]:
-                    speed -= 1
+                    speed -= 0.1
                     change = True
                 elif event.key in [pygame.K_SPACE]:
                     use_speed_limit = not use_speed_limit
                     change = True
                 elif event.key in [pygame.K_q]:
                     exit = True
+                elif event.key in [pygame.K_r]:
+                    odrive_action.reboot(motor)
+                elif event.key in [pygame.K_l]:
+                    print(odrive_action.get_position_limits(motor))
             elif is_event_type(event, "up"):
                 if event.key in [pygame.K_a, pygame.K_LEFT]:
                     left_input = False
@@ -72,16 +77,16 @@ def main():
         render_right_status(right_input)
         render_row(4, f"Speed Limit: {speed if use_speed_limit else 'Uncapped'}")
         
-        if change or (position is not None and abs(position - resting_pos) > 0.1):
+        if odrive_action.get_state(motor) == MotorState.CLOSED_LOOP_CONTROL and (change or (position is not None and abs(position - resting_pos) > 0.1)):
             pos_limits = odrive_action.get_position_limits(motor)
 
-            if use_speed_limit:
-                if odrive_action.get_input_mode(motor) == InputMode.PASSTHROUGH:
-                    odrive_action.set_controller_mode(motor, ControlMode.POSITION_CONTROL, InputMode.TRAP_TRAJ)
-                odrive_action.set_trajectory_velocity(velocity)
-            else:
-                if odrive_action.get_input_mode(motor) == InputMode.TRAP_TRAJ:
-                    odrive_action.set_controller_mode(motor, ControlMode.POSITION_CONTROL, InputMode.PASSTHROUGH)
+#            if use_speed_limit:
+#                if odrive_action.get_input_mode(motor) == InputMode.PASSTHROUGH:
+#                    odrive_action.set_controller_mode(motor, ControlMode.POSITION_CONTROL, InputMode.TRAP_TRAJ)
+#                odrive_action.set_trajectory_velocity(motor, velocity)
+#            else:
+#                if odrive_action.get_input_mode(motor) == InputMode.TRAP_TRAJ:
+#                    odrive_action.set_controller_mode(motor, ControlMode.POSITION_CONTROL, InputMode.PASSTHROUGH)
 
             if left_input:
                 odrive_action.set_target_position(motor, pos_limits[0])

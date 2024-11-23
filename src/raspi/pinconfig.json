@@ -115,12 +115,12 @@
 	"odrive_motor": {
 		"odrive_1": {
 			"bus": "can_bus_1",
-			"axisID": 0,
+			"axisID": 1,
 
 			"control_mode": 3,
 			"input_mode": 5,
-			"position_min": -35,
-			"position_max": 35
+			"position_min": -4.5,
+			"position_max": 4.5
 		}
 	}
 }

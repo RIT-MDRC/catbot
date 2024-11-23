@@ -91,7 +91,7 @@ def get_error_num(error):
     #if only 1 flag is present, it returns a "NamedSignalValue"
     #if multiple flags are present, it returns an int
     #"NamedSignalValue" can not be cast to int, the only way to get the number is to do "error.value", which is invalid if "error" is an int
-    if error is int:
+    if type(error) is int:
         return error
     else:
         return error.value
@@ -110,6 +110,9 @@ def parse_odrive(data: dict) -> ODriveMotor:
 def set_target_position(motor: ODriveMotor, position: float, velocity_FF: float = 0.0, torque_FF: float = 0.0) -> bool:
     """Set the target position for this motor
     Only use this function if Control Mode is set to POSITION_CONTROL"""
+    if motor.current_state != MotorState.CLOSED_LOOP_CONTROL:
+        logging.error(f"Can not set position on motor {motor.axisID} when not in closed loop control.")
+        return False
     if motor.control_mode != ControlMode.POSITION_CONTROL:
         logging.error(f"Can not set position on motor {motor.axisID} when not set to POSITION_CONTROL.")
         return False
@@ -123,15 +126,24 @@ def set_target_position(motor: ODriveMotor, position: float, velocity_FF: float 
 
 @device_action(ctx)
 def set_trajectory_velocity(motor: ODriveMotor, velocity: float) -> bool:
+    if motor.current_state != MotorState.CLOSED_LOOP_CONTROL:
+        logging.error(f"Can not set trajectory velocity on motor {motor.axisID} when not in closed loop control.")
+        return False
     return send_message(motor, "Set_Traj_Vel_Limit", {'Traj_Vel_Limit': velocity})
 
 @device_action(ctx)
 def set_trajectory_accel(motor: ODriveMotor, accel: float, decel: float = None) -> bool:
+    if motor.current_state != MotorState.CLOSED_LOOP_CONTROL:
+        logging.error(f"Can not set trajectory acceleration on motor {motor.axisID} when not in closed loop control.")
+        return False
     return send_message(motor, "Set_Traj_Accel_Limits", {'Traj_Accel_Limit': accel, 'Traj_Decel_Limit': decel if decel else accel})
 
 @device_action(ctx)
 def set_target_velocity(motor: ODriveMotor, velocity: float, torque_FF: float = 0.0) -> bool:
     """Set the target velocity for this motor"""
+    if motor.current_state != MotorState.CLOSED_LOOP_CONTROL:
+        logging.error(f"Can not set velocity on motor {motor.axisID} when not in closed loop control.")
+        return False
     if motor.control_mode == ControlMode.POSITION_CONTROL and motor.input_mode == InputMode.TRAP_TRAJ:
         return set_trajectory_velocity(motor, velocity)
     elif motor.control_mode != ControlMode.VELOCITY_CONTROL:
@@ -141,6 +153,9 @@ def set_target_velocity(motor: ODriveMotor, velocity: float, torque_FF: float = 
 
 @device_action(ctx)
 def stop(motor: ODriveMotor):
+    if motor.current_state != MotorState.CLOSED_LOOP_CONTROL:
+        logging.error(f"Can not stop motor {motor.axisID} when not in closed loop control.")
+        return False
     match motor.control_mode:
         case ControlMode.POSITION_CONTROL:
             if motor.current_position is not None:
@@ -193,6 +208,10 @@ def get_control_mode(motor: ODriveMotor) -> ControlMode:
 @device_action(ctx)
 def get_input_mode(motor: ODriveMotor) -> InputMode:
     return motor.input_mode
+    
+@device_action(ctx)
+def reboot(motor: ODriveMotor) -> bool:
+    return send_message(motor, "Reboot", {})
 
 @device_action(ctx)
 def send_message(motor: ODriveMotor, msg_name: str, data: dict) -> bool:
