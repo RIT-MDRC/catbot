@@ -147,6 +147,7 @@ class FakePWMOutputDevice:
 
 class FakeSMBus:
     def __init__(self, bus: int):
+        logging.info("Mocking smbus2 device for bus %s", bus)
         self.bus = bus
 
     def write_quick(self, i2c_addr, force=None):
