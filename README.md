@@ -46,9 +46,6 @@ catbot
 
 For more command information goto [catbot-cli](cli/README.md)
 
-If all above fails:
-* Consider using the arduino-ide and uploading the code through the ide
-
 ## Contributing
 ### Before contributing
 Make sure to read the documentation in the [wiki](https://github.com/RIT-MDRC/Catbot/wiki).
