@@ -4,6 +4,25 @@
 Quadruped Hybrid Pneumatic-Electric Robot. Utilizes McKibben Muscles for bio-inpired locomotion.
 
 ## Setup
+
+### Docker Dev Container
+* Install [Docker](https://docs.docker.com/get-docker/)
+* `ctrl+shift+p` -> `Dev Containers: Reopen in Container`
+
+### Setup Docker environment
+* Run the following
+* `source .venv/bin/activate`
+* `pip install -r requirements.txt`
+* `source /opt/ros/jazzy/setup.bash`
+* `colcon build`
+* `source install/local_setup.bash`
+
+### Run script
+Build the packages:
+* `colcon build`
+To run the UI package:
+* `ros2 run ui ui`
+
 ### Install dependencies
 * install [python](https://www.python.org/downloads/)
 * install [nodejs](https://nodejs.org/en/download/)
@@ -27,31 +46,10 @@ catbot
 
 For more command information goto [catbot-cli](cli/README.md)
 
-### Setup Arduino Extension
-* Open `src/arduino/arduino.ino` in VSCode
-* Click on `Mac`, `Win32`, or `linux` on the bottom right corner of the window and change to `Arduino`
-* Click on `<Select a Board Type>` in the bottom right corner
-* Search `Arduino Nano`
-* Select `Arduino Nano RP2040 Connect`
-* Go to command pallet (`Ctrl+Shift+P`)
-* Search `Arduino: Rebuild IntelliSense Configuration`
-* Click on Verify button on the top right corner of the window with a checkmark icon
-* and make sure the code passes verification
-
-### Possible Errors on Setup
-Include path error:
-* Try editing the include path in `.vscode/c_cpp_properties.json`
-* Click on `Quick Fix...` at the bottom of the error popup menu after hovering on the error
-* Click on `Add to "include path": "..."`
-* If the error occures with multiple include path options try adding them using the wildcard (`**`) operator
-* Goto `.vscode.c_cpp_properties.json` in the root directory of the repo
-* Example: `"includePath": ["${workspaceFolder}/**", "/Users/doofenshmirtz/Library/Arduino15/packages/arduino/hardware/mbed_nano/4.0.8/cores/arduino/mbed/**"]`
-
 If all above fails:
 * Consider using the arduino-ide and uploading the code through the ide
 
 ## Contributing
 ### Before contributing
-* Make sure to read the [state_management](src/raspi/state_management/README.md) documentation
-* Make sure to read the [io_controller](src/raspi/io_controller/README.md) documentation
-* Make sure to read the [control](src/raspi/control/README.md) documentation
+Make sure to read the documentation in the [wiki](https://github.com/RIT-MDRC/Catbot/wiki).
+Questions with the documentation are welcomed in the [issues tab](https://github.com/RIT-MDRC/Catbot/issues).

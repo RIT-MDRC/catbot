@@ -1,8 +1,29 @@
 {
   "[python]": {
-    "editor.defaultFormatter": "ms-python.black-formatter"
+    "editor.defaultFormatter": "ms-python.black-formatter",
   },
   "C_Cpp.default.includePath": [
     "${workspaceFolder}/src/arduino/libraries/**"
-  ]
+  ],
+  "python.autoComplete.extraPaths": [
+    "/workspaces/main-catbot/install/ui/lib/python3.12/site-packages",
+    "/workspaces/main-catbot/install/foundation/lib/python3.12/site-packages",
+    "/opt/ros/jazzy/lib/python3.12/site-packages"
+  ],
+  "python.analysis.extraPaths": [
+    "/workspaces/main-catbot/install/ui/lib/python3.12/site-packages",
+    "/workspaces/main-catbot/install/foundation/lib/python3.12/site-packages",
+    "/opt/ros/jazzy/lib/python3.12/site-packages"
+  ],
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "match": "./src/*",
+        "isAsync": false,
+        "cmd": ". .venv/bin/activate && colcon build",
+        "messageAfter": "Colcon build complete!",
+        "autoShowOutputPanel": "error"
+      }
+    ]
+  }
 }
