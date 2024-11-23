@@ -5,6 +5,10 @@
 	},
 	"workspaceFolder": "/workspace",
 	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+	"mounts": [
+		"source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind",
+		"source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind"
+	],
 	"customizations": {
 		"vscode": {
 			"settings": {
