@@ -26,8 +26,7 @@ To run the UI package:
 ### Install dependencies
 * install [python](https://www.python.org/downloads/)
 * install [nodejs](https://nodejs.org/en/download/)
-* install [C/C++ extention](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) for VSCode
-* install [Arduino extention](https://marketplace.visualstudio.com/items?itemName=vsciot-vscode.vscode-arduino) for VSCode
+
 ### Install python dependencies
 Run the following command in the terminal:
 ```bash
@@ -37,6 +36,7 @@ for macos:
 ```bash
 pip3 install -r requirements.txt
 ```
+
 ### Install nodejs dependencies and catbot-cli
 Run the following command in the terminal:
 ```bash
