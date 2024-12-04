@@ -151,7 +151,7 @@ def device_action(ctx: Context):
     return decorator
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(frozen=True) # removed slots=True
 class Identifier:
     ctx: Context
 

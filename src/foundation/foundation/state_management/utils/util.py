@@ -1,6 +1,9 @@
 import json
 import logging
 import os
+import dotenv
+
+dotenv.load_dotenv()
 
 from gpiozero import DigitalInputDevice, DigitalOutputDevice, PWMOutputDevice
 
