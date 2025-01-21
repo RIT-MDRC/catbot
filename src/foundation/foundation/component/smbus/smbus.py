@@ -2,7 +2,8 @@ import logging
 from time import sleep
 
 from ...state_management import create_generic_context, device_action, device_parser
-from ...state_management.utils import FakeSMBus as SMBus, is_dev
+from ...state_management.utils import FakeSMBus as SMBus
+from ...state_management.utils import is_dev
 
 if not is_dev():
     from smbus2 import SMBus
@@ -59,7 +60,7 @@ def read_byte(smbus2: SMBus, address, length=1) -> int:
 @device_action(ctx)
 def i2c_wrrd(smbus2: SMBus, address, write_data, read_length) -> list:
     """
-    Write and read data from the smbus2 device.
+    Write and read data from the smbus2 device in that order.
 
     Args:
         smbus2 (SMBus): the smbus2 device
@@ -84,7 +85,7 @@ def i2c_wrrd(smbus2: SMBus, address, write_data, read_length) -> list:
 @device_action(ctx)
 def i2c_rdwr(smbus2: SMBus, *actions) -> list:
     """
-    Write and read data from the smbus2 device.
+    Read bytes or write bytes from the smbus2 device in any order in a unspecified amount given in actions argument.
 
     Args:
         smbus2 (SMBus): the smbus2 device
