@@ -5,10 +5,11 @@
 	},
 	"workspaceFolder": "/workspace",
 	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
-	"mounts": [
-		"source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind",
-		"source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind"
-	],
+	// "mounts": [
+	// 	"source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached"
+	// 	"source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind",
+	// 	"source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind"
+	// ],
 	"customizations": {
 		"vscode": {
 			"settings": {
@@ -39,7 +40,9 @@
 	"containerEnv": {
 		"ROS_LOCALHOST_ONLY": "1",
 		"ROS_DOMAIN_ID": "42",
-		"ENV": "dev"
+		"ENV": "dev",
+		"DISPLAY": "goober:0.0" // specifically only works for the thing I'm using
 	},
+	"forwardPorts": [1234], // arbitrary
 	"postCreateCommand": "python3 -m venv .venv && sudo rosdep update && sudo rosdep install --from-paths src --ignore-src -y"
 }
